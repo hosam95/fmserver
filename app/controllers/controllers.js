@@ -3,6 +3,8 @@ const check = require ("./check");
 const url = require ('url');
 const { response } = require('express');
 let data =[];
+let BUSES =[];
+
 
 
 
@@ -39,6 +41,13 @@ module.exports. post_location = (req,res) =>{
 
             data[indx.i].buses[indx.j].longitude = q.longitude;
             data[indx.i].buses[indx.j].latitude = q.latitude;
+            for (let i=0;i<BUSES.lingth;i++){
+                if (q.imei==BUSES[i].imei){
+                    BUSES[i].longitude = q.longitude;
+                    BUSES[i].latitude = q.latitude;
+                    break;
+                }
+            }
             res.status(200).send({
                 message : "DONE."
             });
@@ -104,7 +113,8 @@ module.exports. add_bus = (req,res) =>{
         state : true,
         longitude : null,
         latitude : null,
-        course : null
+        course : null,
+        line:''
     }
     
     // Validate request
@@ -133,6 +143,7 @@ module.exports. add_bus = (req,res) =>{
         for (let i=0 ;i<data.length; i++){
             if (data[i].name==q.line){
                 bus_c.imei = q.imei;
+                bus_c.line = q.line;
                 data[i].buses.push(bus_c);
                 res.status(200).send({
                     message: "DONE."
@@ -140,6 +151,8 @@ module.exports. add_bus = (req,res) =>{
                 break;
             }
         }
+        BUSES.push(bus_c);
+
     }
     
 }
@@ -221,6 +234,12 @@ module.exports. remove_bus = (req,res) =>{
                 }
             }
         }
+        for(let i=0;i<BUSES.length;i++){
+            if(BUSES[i].imei==q.imei){
+                BUSES.splice(i,1);
+                break;
+            }
+        }
     }
 }
 
@@ -246,12 +265,21 @@ module.exports. update_bus = (req,res) =>{
     }
     else{
         let indx = check.bus_indx(q.imei,data);
+        let k;
+        for (let i=0;i<BUSES.length;i++){
+            if(q.imei==BUSES[i].imei){
+                k=i;
+                break;
+            }
+        }
 
         if (q.driver != ''){
             data[indx.i].buses[indx.j].driver = q.driver;
+            BUSES[k].driver = q.driver;
         }
         if (q.state != ""){
             data[indx.i].buses[indx.j].state = Number(q.state);
+            BUSES[k].state = Number(q.state);
         }
         if (q.line !=  ''){
             if (check.line_is_new(q.line,data)){
@@ -259,6 +287,9 @@ module.exports. update_bus = (req,res) =>{
                 res.status(400).send({
                 message: "Line dose not exist!"
                 });
+            }
+            else if(data[indx.i].name==q.name){
+                BUSES[k].line = q.line;
             }
             else{
                 let bus_c = data[indx.i].buses[indx.j];
@@ -274,8 +305,8 @@ module.exports. update_bus = (req,res) =>{
                 }
 
                 data[indx.i].buses.splice(indx.j,1);
+                BUSES[k].line = q.line;
             }
-
         }
     }
 
