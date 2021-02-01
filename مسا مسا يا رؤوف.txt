@@ -1,0 +1,45 @@
+send the lines.            (get) 
+http://localhost:3000/lines     
+http://localhost:3000/lines     
+
+send the buses.             (get)
+http://localhost:3000/buses
+http://localhost:3000/buses
+
+
+
+add line.                  (post)      {name,map,stops}
+http://localhost:3000/line/:name/:map/:stops
+http://localhost:3000/line/line1/[{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"}]/[{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"}]
+
+
+add bus.                   (post)      {imei,line}
+http://localhost:3000/bus/:imei/:line
+http://localhost:3000/bus/1/line1
+
+
+remove line.                (delete)    {name}# must be buses empty.
+http://localhost:3000/line/:name
+http://localhost:3000/line/line1
+
+
+remove bus.                 (delete)    {imei}
+http://localhost:3000/bus/:imei
+http://localhost:3000/bus/1
+
+
+assign bus data.            (put)       {imei,line,driver,active}
+http://localhost:3000/bus/:imei/:driver/:active/:line
+http://localhost:3000/bus/1/hamada/true/line1
+
+
+post bus location.          (put)       {imei,longitude,latitude}
+http://localhost:3000/location/:imei/:longitude/:latitude
+http://localhost:3000/location/1/113.909813/22.583197
+
+
+-download DB.               (get)      
+# not done yet.
+------------------------------------------
+log in;                     (-----)
+# not Done yet.
