@@ -4,9 +4,22 @@ const url = require ('url');
 const { response } = require('express');
 let data =[];
 let BUSES =[];
+let indx = 0;
+
+// Log In.
+module.exports. log_in = (req,res) =>{
 
 
+}
 
+//..................................................................
+
+// Send the buses data.
+module.exports. get_buses = (req,res) =>{
+    res.status(200).send( JSON.stringify(BUSES) );
+}
+
+//..................................................................
 
 // Send the map data.
 module.exports. get_map = (req,res) =>{
@@ -19,7 +32,7 @@ module.exports. get_map = (req,res) =>{
 module.exports. post_location = (req,res) =>{
 
     let test = true;
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
 
     // Validate request
     if (!req.body) {
@@ -29,28 +42,25 @@ module.exports. post_location = (req,res) =>{
       });
     }
 
-    if(!check.posted_location(q,data)){
+    if(!check.posted_location(q,BUSES)){
         test = false;
         res.status(400).send({
-            message : "Message Error!"
+            message : "Content structure is not correct!"
         });
     }
-
     if(test){
-        let indx = check.bus_indx(q.imei,data);
-
-            data[indx.i].buses[indx.j].longitude = q.longitude;
-            data[indx.i].buses[indx.j].latitude = q.latitude;
-            for (let i=0;i<BUSES.lingth;i++){
+            for (let i=0; i < BUSES.length ;i++){
                 if (q.imei==BUSES[i].imei){
-                    BUSES[i].longitude = q.longitude;
-                    BUSES[i].latitude = q.latitude;
+                    BUSES[i].loc.long = q.longitude;
+                    BUSES[i].loc.lat = q.latitude;
+                    BUSES[i].time = Math.round(new Date().getTime()/1000);
+                    res.status(200).send({
+                        message : "DONE."
+                    });
                     break;
                 }
             }
-            res.status(200).send({
-                message : "DONE."
-            });
+           
     }
     
 } 
@@ -60,12 +70,13 @@ module.exports. post_location = (req,res) =>{
 
 //Add a new line.
 module.exports. add_line = (req, res) => {
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
     let test = true;
     let line_c = {
         name : '',
         map : [],
-        buses :[]
+        index: null,
+        stops:[]        
     }
     // Validate request
     if (!req.body) {
@@ -74,10 +85,8 @@ module.exports. add_line = (req, res) => {
         message: "Content can not be empty!"
       });
     }
-    
 
-
-    if (!check.line_check(q.name,q.map)){
+    if (!check.line_check(q.name,JSON.parse(q.map),JSON.parse(q.stops))){
         test = false;
         res.status(400).send({
           message: "Content structure is not correct!"
@@ -93,10 +102,13 @@ module.exports. add_line = (req, res) => {
 
     if (test){
         line_c.name = q.name;
-        line_c.map = q.map;
+        line_c.map = JSON.parse(q.map);
+        line_c.stops=JSON.parse(q.stops);
+        line_c.index=indx;
+        indx++;
         data.push(line_c);
         res.status(200).send({
-            message: "DONE."
+            message: "index:"+ line_c.index
         });
     }
 }
@@ -105,16 +117,18 @@ module.exports. add_line = (req, res) => {
 
 // Add a new bus.
 module.exports. add_bus = (req,res) =>{
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
     let test = true;
     let bus_c= {
         imei : '',
         driver : '',
-        state : true,
-        longitude : null,
-        latitude : null,
-        course : null,
-        line:''
+        active : true,
+        loc:{
+            lat:null,
+            long:null
+        },
+        line:'',
+        time:null
     }
     
     // Validate request
@@ -132,27 +146,20 @@ module.exports. add_bus = (req,res) =>{
         });
     }
 
-    if (!check.bus_is_new(q.imei,data)){
+    if (!check.bus_is_new(q.imei,BUSES)){
         test = false;
         res.status(400).send({
           message: "Bus olready exist!"
         });
     }
     
-    if (test){
-        for (let i=0 ;i<data.length; i++){
-            if (data[i].name==q.line){
-                bus_c.imei = q.imei;
-                bus_c.line = q.line;
-                data[i].buses.push(bus_c);
-                res.status(200).send({
-                    message: "DONE."
-                });
-                break;
-            }
-        }
+if (test){
+        bus_c.imei = q.imei;
+        bus_c.line = q.line;
         BUSES.push(bus_c);
-
+        res.status(200).send({
+            message: "DONE."
+        });
     }
     
 }
@@ -163,7 +170,7 @@ module.exports. add_bus = (req,res) =>{
 
 // Remove a line.
 module.exports. remove_line = (req,res) =>{
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
 
     let test =true;
     // Validate request
@@ -181,7 +188,7 @@ module.exports. remove_line = (req,res) =>{
         });
     }
     
-    if (check.buses_in_line(q.name,data)){
+    if (check.buses_in_line(q.name,BUSES)){
         test = false;
         res.status(401).send({
           message: "Remove or reassign the buses in the line first!"
@@ -205,7 +212,7 @@ module.exports. remove_line = (req,res) =>{
 
 // Remove a bus.
 module.exports. remove_bus = (req,res) =>{
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
     let test =true;
     // Validate request
     if (!req.body) {
@@ -215,28 +222,20 @@ module.exports. remove_bus = (req,res) =>{
       });
     }
 
-    if (check.bus_is_new(q.imei,data)){
+    if (check.bus_is_new(q.imei,BUSES)){
         test = false;
         res.status(400).send({
           message: "Bus dose not exist!"
         });
     }
 
-    if(test){
-        for(let i =0;i<data.length;i++){
-            for(let j =0; j < data[i].buses.length ;j++){
-                if (data[i].buses[j].imei == q.imei){
-                    data[i].buses.splice(j,1);
-                    res.status(200).send({
-                        message: "DONE."
-                    });
-                    break;
-                }
-            }
-        }
+    if(test){   
         for(let i=0;i<BUSES.length;i++){
             if(BUSES[i].imei==q.imei){
                 BUSES.splice(i,1);
+                res.status(200).send({
+                    message: "DONE."
+                });
                 break;
             }
         }
@@ -247,7 +246,7 @@ module.exports. remove_bus = (req,res) =>{
 
 // Assign bus data.
 module.exports. update_bus = (req,res) =>{
-    let q =url.parse(req.url, true).query;
+    let q = req.params;
     let test =true;
 
     // Validate request
@@ -257,14 +256,13 @@ module.exports. update_bus = (req,res) =>{
         message: "Content can not be empty!"
       });
     }
-    else if (check.bus_is_new(q.imei,data)){
+    else if (check.bus_is_new(q.imei,BUSES)){
         test = false;
         res.status(400).send({
           message: "Bus dose not exist!"
         });
     }
     else{
-        let indx = check.bus_indx(q.imei,data);
         let k;
         for (let i=0;i<BUSES.length;i++){
             if(q.imei==BUSES[i].imei){
@@ -274,12 +272,17 @@ module.exports. update_bus = (req,res) =>{
         }
 
         if (q.driver != ''){
-            data[indx.i].buses[indx.j].driver = q.driver;
             BUSES[k].driver = q.driver;
         }
-        if (q.state != ""){
-            data[indx.i].buses[indx.j].state = Number(q.state);
-            BUSES[k].state = Number(q.state);
+        if (q.active != ""){
+            if (q.active=="true"){BUSES[k].active=true;}
+            else if (q.active=="false"){BUSES[k].active=false;}
+            else {
+                test = false;
+                res.status(401).send({
+                message: "active value can only be 'true' or 'false'."
+                });
+            }
         }
         if (q.line !=  ''){
             if (check.line_is_new(q.line,data)){
@@ -288,28 +291,20 @@ module.exports. update_bus = (req,res) =>{
                 message: "Line dose not exist!"
                 });
             }
-            else if(data[indx.i].name==q.name){
-                BUSES[k].line = q.line;
-            }
             else{
-                let bus_c = data[indx.i].buses[indx.j];
-
-                for (let i=0 ;i<data.length; i++){
-                    if (data[i].name==q.line){
-                        data[i].buses.push(bus_c);
-                        res.status(200).send({
-                            message: "DONE."
-                        });
-                        break;
-                    }
-                }
-
-                data[indx.i].buses.splice(indx.j,1);
                 BUSES[k].line = q.line;
             }
-        }
+        } 
     }
-
+    if(test){
+        res.status(200).send({
+            message: "DONE."
+        });
+    }
 }
 
 //..................................................................
+
+module.exports. BUSES = BUSES;
+
+/*    let q =url.parse(req.url, true).query;    */

@@ -1,29 +1,33 @@
 const data = require("../controllers/controllers.js");
 
 module.exports = app => {
-   
-    //Send the Bus Location.
-    app.put("/location", data.post_location);
-
-    // Send the map data.
-    app.get('/map', data.get_map);
+    //Log In.
+    app.post("/login",data.log_in);
 
     // Create a new line.
-    app.post("/addline", data.add_line);
+    app.post("/line/:name/:map/:stops", data.add_line);
 
     // Ad a new bus.
-    app.post("/addbus", data.add_bus);
-  
+    app.post("/bus/:imei/:line", data.add_bus);
+    
+    //Send buses location.
+    app.get("/buses" , data.get_buses);
+
+    // Send the map data.
+    app.get('/lines', data.get_map);
 
     // Delete a line with line-name.
-    app.delete("/deleteline", data.remove_line);
+    app.delete("/line/:name", data.remove_line);
 
     // Delete a bus with bus_imei.
-    app.delete("/deletebus", data.remove_bus);
+    app.delete("/bus/:imei", data.remove_bus);
 
     // Update the data of a bus.
-    app.put("/update", data.update_bus);   
-  
+    app.put("/bus/:imei/:driver/:active/:line", data.update_bus);   
+
+    //upload the Bus Location.
+    app.put("/location/:imei/:longitude/:latitude", data.post_location);
+
     /* // Send the database tables.
     app.get("/data", data.send_db);
    */
