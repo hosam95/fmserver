@@ -8,7 +8,7 @@ module.exports = app => {
     app.post("/line/:name/:map/:stops", data.add_line);
 
     // Ad a new bus.
-    app.post("/bus/:imei/:line", data.add_bus);
+    app.post("/bus/:imei", data.add_bus);
     
     //Send buses location.
     app.get("/buses" , data.get_buses);
@@ -23,10 +23,10 @@ module.exports = app => {
     app.delete("/bus/:imei", data.remove_bus);
 
     // Update the data of a bus.
-    app.put("/bus/:imei/:driver/:active/:line", data.update_bus);   
+    app.put("/bus/:imei", data.update_bus);   
 
     //upload the Bus Location.
-    app.put("/location/:imei/:longitude/:latitude", data.post_location);
+    app.put("/bus/:imei/location", data.post_location);
 
     /* // Send the database tables.
     app.get("/data", data.send_db);

@@ -32,7 +32,8 @@ module.exports. get_map = (req,res) =>{
 module.exports. post_location = (req,res) =>{
 
     let test = true;
-    let q = req.params;
+    let imei = req.params;
+    let q =url.parse(req.url, true).query;
 
     // Validate request
     if (!req.body) {
@@ -42,7 +43,7 @@ module.exports. post_location = (req,res) =>{
       });
     }
 
-    if(!check.posted_location(q,BUSES)){
+    if(!check.posted_location(imei,q,BUSES)){
         test = false;
         res.status(400).send({
             message : "Content structure is not correct!"
@@ -50,7 +51,7 @@ module.exports. post_location = (req,res) =>{
     }
     if(test){
             for (let i=0; i < BUSES.length ;i++){
-                if (q.imei==BUSES[i].imei){
+                if (imei==BUSES[i].imei){
                     BUSES[i].loc.long = q.longitude;
                     BUSES[i].loc.lat = q.latitude;
                     BUSES[i].time = Math.round(new Date().getTime()/1000);
@@ -85,7 +86,9 @@ module.exports. add_line = (req, res) => {
         message: "Content can not be empty!"
       });
     }
-
+//*************** */
+console.log(req);
+/**************** */
     if (!check.line_check(q.name,JSON.parse(q.map),JSON.parse(q.stops))){
         test = false;
         res.status(400).send({
@@ -117,7 +120,8 @@ module.exports. add_line = (req, res) => {
 
 // Add a new bus.
 module.exports. add_bus = (req,res) =>{
-    let q = req.params;
+    let imei = req.params;
+    let q =url.parse(req.url, true).query;
     let test = true;
     let bus_c= {
         imei : '',
@@ -139,14 +143,14 @@ module.exports. add_bus = (req,res) =>{
       });
     }
    
-    if (!check.bus_check(q.imei , q.line , data )){
+    if (!check.bus_check(imei , q.line , data )){
         test = false;
         res.status(400).send({
           message: "Content structure is not correct!"
         });
     }
 
-    if (!check.bus_is_new(q.imei,BUSES)){
+    if (!check.bus_is_new(imei,BUSES)){
         test = false;
         res.status(400).send({
           message: "Bus olready exist!"
@@ -154,7 +158,7 @@ module.exports. add_bus = (req,res) =>{
     }
     
 if (test){
-        bus_c.imei = q.imei;
+        bus_c.imei = imei;
         bus_c.line = q.line;
         BUSES.push(bus_c);
         res.status(200).send({
@@ -246,7 +250,8 @@ module.exports. remove_bus = (req,res) =>{
 
 // Assign bus data.
 module.exports. update_bus = (req,res) =>{
-    let q = req.params;
+    let imei = req.params;
+    let q =url.parse(req.url, true).query;
     let test =true;
 
     // Validate request
@@ -256,7 +261,7 @@ module.exports. update_bus = (req,res) =>{
         message: "Content can not be empty!"
       });
     }
-    else if (check.bus_is_new(q.imei,BUSES)){
+    else if (check.bus_is_new(imei,BUSES)){
         test = false;
         res.status(400).send({
           message: "Bus dose not exist!"
@@ -265,7 +270,7 @@ module.exports. update_bus = (req,res) =>{
     else{
         let k;
         for (let i=0;i<BUSES.length;i++){
-            if(q.imei==BUSES[i].imei){
+            if(imei==BUSES[i].imei){
                 k=i;
                 break;
             }
