@@ -5,7 +5,7 @@ module.exports = app => {
     app.post("/login",data.log_in);
 
     // Create a new line.
-    app.post("/line/:name/:map/:stops", data.add_line);
+    app.post("/line/:name", data.add_line);
 
     // Ad a new bus.
     app.post("/bus/:imei", data.add_bus);

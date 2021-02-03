@@ -87,9 +87,9 @@ module.exports. add_line = (req, res) => {
       });
     }
 //*************** */
-console.log(req);
+console.log(req.body.map);
 /**************** */
-    if (!check.line_check(q.name,JSON.parse(q.map),JSON.parse(q.stops))){
+    if (!check.line_check(q.name,req.body.map,req.body.stops)){
         test = false;
         res.status(400).send({
           message: "Content structure is not correct!"
@@ -105,8 +105,8 @@ console.log(req);
 
     if (test){
         line_c.name = q.name;
-        line_c.map = JSON.parse(q.map);
-        line_c.stops=JSON.parse(q.stops);
+        line_c.map = req.body.map;
+        line_c.stops=req.body.stops;
         line_c.index=indx;
         indx++;
         data.push(line_c);
