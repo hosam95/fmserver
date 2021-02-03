@@ -86,9 +86,7 @@ module.exports. add_line = (req, res) => {
         message: "Content can not be empty!"
       });
     }
-//*************** */
-console.log(req.body.map);
-/**************** */
+    
     if (!check.line_check(q.name,req.body.map,req.body.stops)){
         test = false;
         res.status(400).send({
