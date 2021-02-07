@@ -1,4 +1,4 @@
-const db = require ('../DB/db_code.js');
+const db = require ('../data_control/db.js');
 const check = require ("./check");
 const url = require ('url');
 const { response } = require('express');
@@ -10,7 +10,17 @@ let indx = 0;
 
 // Log In.
 module.exports. log_in = (req,res) =>{
+    let test = true;
 
+    // Validate request
+    if (!req.body) {
+        test = false;
+      res.status(400).send({
+        message: "Content can not be empty!"
+      });
+    }
+
+    db.log_in(req.bod.username,req.body.password);
 
 }
 
@@ -319,3 +329,6 @@ module.exports. update_bus = (req,res) =>{
 module.exports. BUSES = BUSES;
 
 /*    let q =url.parse(req.url, true).query;    */
+
+//(t1,g1),(t2,g2),(T,G)
+((T*g1)-(T*g2)-(G*t1)+(G*t2)-(g1*t2)+(g2*t1))/Math.sqrt((t1*t1)+(t2*t2)-(2*t1*t2)+(g1*g1)+(g2*g2)-(2*g1*g2));
