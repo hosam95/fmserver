@@ -1,7 +1,9 @@
 const express = require ('express');
 const bodyParser = require ('body-parser');
 const cn = require("./app/controllers/controllers.js");
+const db = require('./app/data_control/db.js').Database;
 
+let database = db.getInstance(); 
 const app = express();
 
 // parse requests of content-type: application/json
@@ -18,10 +20,10 @@ app.listen(3000, () => {
   
 setInterval(() => {
   time=Math.round(new Date().getTime()/1000);
-  for(let i=0;i<cn.BUSES.lingth;i++){
-    if(cn.BUSES[i].time==null){
+  for(let i=0;i<database.buses.lingth;i++){
+    if(database.buses[i].time==null){
     }
-    else if (cn.BUSES[i].time<time-5){
+    else if (database.buses[i].time<time-5){
       //send an alert.
     }
   }
