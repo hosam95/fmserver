@@ -63,6 +63,7 @@ module.exports. post_location = (req,res) =>{
     }
 
     if(test){
+        let i=0;
         for (let i=0; i < BUSES.length ;i++){
             if (imei==BUSES[i].imei){
                 BUSES[i].loc.long = q.longitude;
@@ -75,6 +76,15 @@ module.exports. post_location = (req,res) =>{
             }
         }
         db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
+        for (let j=0;j<lines.length;j++){
+            if (lines[j].index ==BUSES[i].line){
+                if (!check.in_line(q.latitude,q.longitude,lines[j].map)){
+                    /*########################################################################################
+                    fire the alert.
+                    ########################################################################################*/
+                }
+            }
+        }
     }
 } 
 
@@ -330,5 +340,3 @@ module.exports. BUSES = BUSES;
 
 /*    let q =url.parse(req.url, true).query;    */
 
-//(t1,g1),(t2,g2),(T,G)
-((T*g1)-(T*g2)-(G*t1)+(G*t2)-(g1*t2)+(g2*t1))/Math.sqrt((t1*t1)+(t2*t2)-(2*t1*t2)+(g1*g1)+(g2*g2)-(2*g1*g2));

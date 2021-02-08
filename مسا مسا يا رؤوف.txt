@@ -9,8 +9,8 @@ http://localhost:3000/buses
 
 
 add line.                  (post)      {name,{map,stops}}
-http://localhost:3000/line/:name?map=...&stops=...
-http://localhost:3000/line/line1/{name:[{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"}],stops:[{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"}]}
+http://localhost:3000/line/:name --{map=... ,stops=...}
+http://localhost:3000/line/line1/{map:[{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"},{"long":"1651236","lat":"952416"}],stops:[{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"},{"name":"h1","long":"1651236","lat":"952416"}]}
 
 
 add bus.                   (post)      {imei,line}
@@ -30,12 +30,12 @@ http://localhost:3000/bus/1
 
 assign bus data.            (put)       {imei,line,driver,active}
 http://localhost:3000/bus/:imei?driver=..&active=..&line=..
-http://localhost:3000/bus/1?driver=hamada&active=true&line=line1
+http://localhost:3000/bus/1?driver=hamada&active=true&line=1
 
 
 post bus location.          (put)       {imei,longitude,latitude}
-http://localhost:3000/location/:imei?longitude=..&latitude=..
-http://localhost:3000/location/1?longitude=113.909813&latitude=22.583197
+http://localhost:3000/buse/:imei/location?longitude=..&latitude=..
+http://localhost:3000/buse/1/location?longitude=113.909813&latitude=22.583197
 
 
 -download DB.               (get)      
