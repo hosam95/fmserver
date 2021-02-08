@@ -6,5 +6,8 @@
         "host": "localhost",
         "port": 27017,
         "name": "fmdb"
+    },
+    "auth": {
+        "tokenExpiry": 120
     }
 }
