@@ -1,11 +1,11 @@
-const db = require ('../data_control/db.js');
+/*const db = require ('../data_control/db.js');*/
 const check = require ("./check");
 const url = require ('url');
 const { response } = require('express');
 const { json } = require("body-parser")
-
+/*
 let lines =[];
-let BUSES =[];  
+let BUSES =[];*/
 let indx = 0;
 
 // Log In.
@@ -20,7 +20,15 @@ module.exports. log_in = (req,res) =>{
       });
     }
 
-    db.log_in(req.bod.username,req.body.password);
+    database.login(req.bod.username,req.body.password,(token)=>{
+        res.status(200).send ({
+            massage : token
+        })
+    } ,()=>{
+        res.status(400).send ({
+            massage : "username or password is not correct!"
+        })
+    });
 
 }
 
@@ -28,14 +36,14 @@ module.exports. log_in = (req,res) =>{
 
 // Send the buses data.
 module.exports. get_buses = (req,res) =>{
-    res.status(200).send( JSON.stringify(BUSES) );
+    res.status(200).send( JSON.stringify(database.buses) );
 }
 
 //..................................................................
 
 // Send the map data.
 module.exports. get_map = (req,res) =>{
-    res.status(200).send( JSON.stringify(lines) );
+    res.status(200).send( JSON.stringify(database.lines) );
 }
 
 //..................................................................
@@ -64,20 +72,23 @@ module.exports. post_location = (req,res) =>{
 
     if(test){
         let i=0;
-        for (let i=0; i < BUSES.length ;i++){
-            if (imei==BUSES[i].imei){
-                BUSES[i].loc.long = q.longitude;
-                BUSES[i].loc.lat = q.latitude;
-                BUSES[i].time = Math.round(new Date().getTime()/1000);
+        let bus;
+        for (let i=0; i < database.buses.length ;i++){
+            if (imei==data.buses[i].imei){
+                bus = database.buses[i];
+                bus.loc.long = q.longitude;
+                bus.loc.lat = q.latitude;
+                bus.time = Math.round(new Date().getTime()/1000);
+                database.updateBusInfo(bus);
                 res.status(200).send({
                     message : "DONE."
                 });
-                break;
+                break; 
             }
         }
-        db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
-        for (let j=0;j<lines.length;j++){
-            if (lines[j].index ==BUSES[i].line){
+        
+        for (let j=0;j<database.lines.length;j++){
+            if (database.lines[j].index ==bus.line){
                 if (!check.in_line(q.latitude,q.longitude,lines[j].map)){
                     /*########################################################################################
                     fire the alert.
@@ -116,7 +127,7 @@ module.exports. add_line = (req, res) => {
         });
     }
 
-    if (!check.line_is_new(q.name,lines)){
+    if (!check.line_is_new(q.name,database.lines)){
         test = false;
         res.status(400).send({
           message: "Line olready exist!"
@@ -127,13 +138,16 @@ module.exports. add_line = (req, res) => {
         line_c.name = q.name;
         line_c.map = req.body.map;
         line_c.stops=req.body.stops;
-        line_c.index=indx;
+        if (database.lines[database.lines.length]==0){
+            indx=0;
+        }
+        else{indx=database.lines[database.lines.length-1].index; }
         indx++;
-        lines.push(line_c);
+        line_c.index=indx;
+        database.addLine(line_c);
         res.status(200).send({
             message: "index:"+ line_c.index
         });
-        db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
     }
 }
 
@@ -164,14 +178,14 @@ module.exports. add_bus = (req,res) =>{
       });
     }
    
-    if (!check.bus_check(imei , q.line , lines )){
+    if (!check.bus_check(imei , q.line , database.lines )){
         test = false;
         res.status(400).send({
           message: "Content structure is not correct!"
         });
     }
 
-    if (!check.bus_is_new(imei,BUSES)){
+    if (!check.bus_is_new(imei,database.buses)){
         test = false;
         res.status(400).send({
           message: "Bus olready exist!"
@@ -181,11 +195,10 @@ module.exports. add_bus = (req,res) =>{
     if (test){
         bus_c.imei = imei;
         bus_c.line = q.line;
-        BUSES.push(bus_c);
+        database.addBus(bus_c);
         res.status(200).send({
             message: "DONE."
         });
-        db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
     }
     
 }
@@ -207,14 +220,14 @@ module.exports. remove_line = (req,res) =>{
       });
     }
 
-    if (check.line_is_new(q.name,lines)){
+    if (check.line_is_new(q.name,database.lines)){
         test = false;
         res.status(400).send({
           message: "Line dose not exist!"
         });
     }
     
-    if (check.buses_in_line(q.name,BUSES)){
+    if (check.buses_in_line(q.name,database.buses)){
         test = false;
         res.status(401).send({
           message: "Remove or reassign the buses in the line first!"
@@ -222,16 +235,16 @@ module.exports. remove_line = (req,res) =>{
     }
     
     if (test){
-        for (let i =0; i<lines.length;i++){
-            if (q.name==lines[i].name){
-                lines.splice(i,1);
+        for (let i =0; i<database.lines.length;i++){
+            if (q.name==database.lines[i].name){
+                let line_c =database.lines[i];
+                database.removeLine(line_c)
                 res.status(200).send({
                     message: "DONE."
                 });
                 break;
             }
         }
-        db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
     }
 }
 
@@ -249,7 +262,7 @@ module.exports. remove_bus = (req,res) =>{
       });
     }
 
-    if (check.bus_is_new(q.imei,BUSES)){
+    if (check.bus_is_new(q.imei,database.buses)){
         test = false;
         res.status(400).send({
           message: "Bus dose not exist!"
@@ -257,16 +270,16 @@ module.exports. remove_bus = (req,res) =>{
     }
 
     if(test){   
-        for(let i=0;i<BUSES.length;i++){
-            if(BUSES[i].imei==q.imei){
-                BUSES.splice(i,1);
+        for(let i=0;i<database.buses.length;i++){
+            if(database.buses[i].imei==q.imei){
+                let bus_c=database.buses[i];
+                database.removeBus(bus_c);
                 res.status(200).send({
                     message: "DONE."
                 });
                 break;
             }
         }
-        db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
     }
 }
 
@@ -277,6 +290,13 @@ module.exports. update_bus = (req,res) =>{
     let imei = req.params;
     let q =url.parse(req.url, true).query;
     let test =true;
+    let bus_c;
+    for(let i=0;i<database.buses.length;i++){
+        if(database.buses[i].imei==imei){
+            buse_c=database.buses[i];
+            break;
+        }
+    }
 
     // Validate request
     if (!req.body) {
@@ -285,27 +305,20 @@ module.exports. update_bus = (req,res) =>{
         message: "Content can not be empty!"
       });
     }
-    else if (check.bus_is_new(imei,BUSES)){
+    else if (check.bus_is_new(imei,database.buses)){
         test = false;
         res.status(400).send({
           message: "Bus dose not exist!"
         });
     }
     else{
-        let k;
-        for (let i=0;i<BUSES.length;i++){
-            if(imei==BUSES[i].imei){
-                k=i;
-                break;
-            }
-        }
 
         if (q.driver != ''){
-            BUSES[k].driver = q.driver;
+            bus_c.driver = q.driver;
         }
         if (q.active != ""){
-            if (q.active=="true"){BUSES[k].active=true;}
-            else if (q.active=="false"){BUSES[k].active=false;}
+            if (q.active=="true"){bus_c.active=true;}
+            else if (q.active=="false"){bus_c.active=false;}
             else {
                 test = false;
                 res.status(401).send({
@@ -314,29 +327,28 @@ module.exports. update_bus = (req,res) =>{
             }
         }
         if (q.line !=  ''){
-            if (check.line_is_new(q.line,lines)){
+            if (check.line_is_new(q.line,database.lines)){
                 test = false;
                 res.status(400).send({
                 message: "Line dose not exist!"
                 });
             }
             else{
-                BUSES[k].line = q.line;
+                bus_c.line = q.line;
             }
         } 
     }
     if(test){
+        database.updateBusInfo(bus_c);
         res.status(200).send({
             message: "DONE."
         });
     }
-    db.insert_in_data(JSON.stringify(lines),JSON.stringify(BUSES));
 
 }
 
 //..................................................................
 
-module.exports. BUSES = BUSES;
 
 /*    let q =url.parse(req.url, true).query;    */
 
