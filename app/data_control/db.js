@@ -7,7 +7,7 @@ const crypto = require('crypto');
  * @property {string} name Line name
  * @property {{long: Number, lat: Number}[]} map Line defining points
  * @property {Int32Array} index Line index
- * @property {{name:string, long: Number, lat: Number}[]} map Line defining points
+ * @property {{name:string, long: Number, lat: Number}[]} stops Line defining points
  */
 
 /**
