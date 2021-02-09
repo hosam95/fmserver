@@ -1,4 +1,4 @@
-/*const db = require ('../data_control/db.js');*/
+const db = require ('../data_control/db.js').Database;
 const check = require ("./check");
 const url = require ('url');
 const { response } = require('express');
@@ -7,6 +7,7 @@ const { json } = require("body-parser")
 let lines =[];
 let BUSES =[];*/
 let indx = 0;
+let database = db.getInstance(); 
 
 // Log In.
 module.exports. log_in = (req,res) =>{
@@ -20,9 +21,9 @@ module.exports. log_in = (req,res) =>{
       });
     }
 
-    database.login(req.bod.username,req.body.password,(token)=>{
+    database.login(req.body.username,req.body.password,(token)=>{
         res.status(200).send ({
-            massage : token
+            token : token
         })
     } ,()=>{
         res.status(400).send ({
@@ -52,7 +53,7 @@ module.exports. get_map = (req,res) =>{
 module.exports. post_location = (req,res) =>{
 
     let test = true;
-    let imei = req.params;
+    let imei = req.params.imei;
     let q =url.parse(req.url, true).query;
 
     // Validate request
@@ -63,7 +64,7 @@ module.exports. post_location = (req,res) =>{
       });
     }
 
-    if(!check.posted_location(imei,q,BUSES)){
+    if(!check.posted_location(imei,q, database.buses)){
         test = false;
         res.status(400).send({
             message : "Content structure is not correct!"
@@ -74,7 +75,7 @@ module.exports. post_location = (req,res) =>{
         let i=0;
         let bus;
         for (let i=0; i < database.buses.length ;i++){
-            if (imei==data.buses[i].imei){
+            if (imei==database.buses[i].imei){
                 bus = database.buses[i];
                 bus.loc.long = q.longitude;
                 bus.loc.lat = q.latitude;
@@ -138,10 +139,12 @@ module.exports. add_line = (req, res) => {
         line_c.name = q.name;
         line_c.map = req.body.map;
         line_c.stops=req.body.stops;
-        if (database.lines[database.lines.length]==0){
+        if (database.lines.length==0){
             indx=0;
         }
-        else{indx=database.lines[database.lines.length-1].index; }
+        else{
+            indx=database.lines[database.lines.length-1].index; 
+        }
         indx++;
         line_c.index=indx;
         database.addLine(line_c);
@@ -155,7 +158,7 @@ module.exports. add_line = (req, res) => {
 
 // Add a new bus.
 module.exports. add_bus = (req,res) =>{
-    let imei = req.params;
+    let imei = req.params.imei;
     let q =url.parse(req.url, true).query;
     let test = true;
     let bus_c= {
@@ -287,13 +290,13 @@ module.exports. remove_bus = (req,res) =>{
 
 // Assign bus data.
 module.exports. update_bus = (req,res) =>{
-    let imei = req.params;
+    let imei = req.params.imei;
     let q =url.parse(req.url, true).query;
     let test =true;
-    let bus_c;
+    let bus_c = {};
     for(let i=0;i<database.buses.length;i++){
         if(database.buses[i].imei==imei){
-            buse_c=database.buses[i];
+            bus_c=database.buses[i];
             break;
         }
     }

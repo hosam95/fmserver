@@ -68,7 +68,6 @@ module.exports. bus_indx = (imei,data) => {
 
 module.exports. posted_location = (imei,q,buses) =>{
     if (this.bus_is_new(imei,buses)){
-        console.log("1")
         return false;
     }
     if(!q.longitude){

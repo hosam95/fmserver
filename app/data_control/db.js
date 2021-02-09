@@ -81,7 +81,7 @@ class Database {
      * @param {Line} line The Line data
      */
     addLine(line) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
@@ -100,7 +100,7 @@ class Database {
      * @param {Bus} bus The bus data
      */
     addBus(bus) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
@@ -119,7 +119,7 @@ class Database {
      * @param {Line} line The Line data
      */
     updateLineInfo(line) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
@@ -141,7 +141,7 @@ class Database {
      * @param {Bus} bus The bus data
      */
     updateBusInfo(bus) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
@@ -163,7 +163,7 @@ class Database {
      * @param {Line} line The Line data
      */
     removeLine(line) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
@@ -184,7 +184,7 @@ class Database {
      * @param {Bus} bus The bus data
      */
     removeBus(bus) {
-        MongoClient.connect(url, function(err, db) {
+        MongoClient.connect(dbUri, function(err, db) {
             if (err) throw err;
 
             var dbo = db.db(dbName);
