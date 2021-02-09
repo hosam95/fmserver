@@ -134,24 +134,29 @@ module.exports. add_line = (req, res) => {
           message: "Line olready exist!"
         });
     }
-
-    if (test){
-        line_c.name = q.name;
-        line_c.map = req.body.map;
-        line_c.stops=req.body.stops;
-        if (database.lines.length==0){
-            indx=0;
+    database.checkToken(req.header("token"),(result)=>{
+        if (test){
+            line_c.name = q.name;
+            line_c.map = req.body.map;
+            line_c.stops=req.body.stops;
+            if (database.lines.length==0){
+                indx=0;
+            }
+            else{
+                indx=database.lines[database.lines.length-1].index; 
+            }
+            indx++;
+            line_c.index=indx;
+            database.addLine(line_c);
+            res.status(200).send({
+                message: "index:"+ line_c.index
+            });
         }
-        else{
-            indx=database.lines[database.lines.length-1].index; 
-        }
-        indx++;
-        line_c.index=indx;
-        database.addLine(line_c);
-        res.status(200).send({
-            message: "index:"+ line_c.index
-        });
-    }
+    },()=>{
+        res.status(403).send({
+            message: "Access Denied"
+          });
+    });
 }
 
 //..................................................................
@@ -194,15 +199,22 @@ module.exports. add_bus = (req,res) =>{
           message: "Bus olready exist!"
         });
     }
+
+    database.checkToken(req.header("token"),(result)=>{
+        if (test){
+            bus_c.imei = imei;
+            bus_c.line = q.line;
+            database.addBus(bus_c);
+            res.status(200).send({
+                message: "DONE."
+            });
+        }
+    },()=>{
+        res.status(403).send({
+            message: "Access Denied"
+          });
+    });
     
-    if (test){
-        bus_c.imei = imei;
-        bus_c.line = q.line;
-        database.addBus(bus_c);
-        res.status(200).send({
-            message: "DONE."
-        });
-    }
     
 }
 
@@ -226,7 +238,7 @@ module.exports. remove_line = (req,res) =>{
     if (check.line_is_new(q.name,database.lines)){
         test = false;
         res.status(400).send({
-          message: "Line dose not exist!"
+          message: "Line does not exist!"
         });
     }
     
@@ -236,19 +248,25 @@ module.exports. remove_line = (req,res) =>{
           message: "Remove or reassign the buses in the line first!"
         });
     }
-    
-    if (test){
-        for (let i =0; i<database.lines.length;i++){
-            if (q.name==database.lines[i].name){
-                let line_c =database.lines[i];
-                database.removeLine(line_c)
-                res.status(200).send({
-                    message: "DONE."
-                });
-                break;
+    database.checkToken(req.header("token"),(result)=>{
+        if (test){
+            for (let i =0; i<database.lines.length;i++){
+                if (q.name==database.lines[i].name){
+                    let line_c =database.lines[i];
+                    database.removeLine(line_c)
+                    res.status(200).send({
+                        message: "DONE."
+                    });
+                    break;
+                }
             }
         }
-    }
+    },()=>{
+        res.status(403).send({
+            message: "Access Denied"
+          });
+    });
+   
 }
 
 //..................................................................
@@ -268,22 +286,28 @@ module.exports. remove_bus = (req,res) =>{
     if (check.bus_is_new(q.imei,database.buses)){
         test = false;
         res.status(400).send({
-          message: "Bus dose not exist!"
+          message: "Bus does not exist!"
         });
     }
-
-    if(test){   
-        for(let i=0;i<database.buses.length;i++){
-            if(database.buses[i].imei==q.imei){
-                let bus_c=database.buses[i];
-                database.removeBus(bus_c);
-                res.status(200).send({
-                    message: "DONE."
-                });
-                break;
+    database.checkToken(req.header("token"),(result)=>{
+        if(test){   
+            for(let i=0;i<database.buses.length;i++){
+                if(database.buses[i].imei==q.imei){
+                    let bus_c=database.buses[i];
+                    database.removeBus(bus_c);
+                    res.status(200).send({
+                        message: "DONE."
+                    });
+                    break;
+                }
             }
         }
-    }
+    },()=>{
+        res.status(403).send({
+            message: "Access Denied"
+          });
+    });
+    
 }
 
 //..................................................................
@@ -311,7 +335,7 @@ module.exports. update_bus = (req,res) =>{
     else if (check.bus_is_new(imei,database.buses)){
         test = false;
         res.status(400).send({
-          message: "Bus dose not exist!"
+          message: "Bus does not exist!"
         });
     }
     else{
@@ -333,7 +357,7 @@ module.exports. update_bus = (req,res) =>{
             if (check.line_is_new(q.line,database.lines)){
                 test = false;
                 res.status(400).send({
-                message: "Line dose not exist!"
+                message: "Line does not exist!"
                 });
             }
             else{
@@ -341,12 +365,19 @@ module.exports. update_bus = (req,res) =>{
             }
         } 
     }
-    if(test){
-        database.updateBusInfo(bus_c);
-        res.status(200).send({
-            message: "DONE."
-        });
-    }
+    database.checkToken(req.header("token"),(result)=>{
+        if(test){
+            database.updateBusInfo(bus_c);
+            res.status(200).send({
+                message: "DONE."
+            });
+        }
+    },()=>{
+        res.status(403).send({
+            message: "Access Denied"
+          });
+    });
+    
 
 }
 
