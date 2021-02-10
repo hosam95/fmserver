@@ -1,6 +1,7 @@
 {
     "app": {
-        "port": 4000
+        "port": 4000,
+        "cors_origin": "http://localhost:3000"
     },
     "db": {
         "host": "localhost",

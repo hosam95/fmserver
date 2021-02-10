@@ -1,5 +1,6 @@
 const express = require('express');
 const config = require('config');
+var cors = require('cors')
 const bodyParser = require('body-parser');
 const cn = require("./app/controllers/controllers.js");
 const db = require('./app/data_control/db.js').Database;
@@ -9,6 +10,13 @@ const app = express();
 
 // parse requests of content-type: application/json
 app.use(bodyParser.json());
+
+// User CORS
+var corsOptions = {
+  origin: config.get('app.cors_origin'),
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+app.use(cors(corsOptions))
 
 // parse requests of content-type: application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
