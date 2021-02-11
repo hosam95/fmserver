@@ -1,4 +1,4 @@
-let max_distane = 20;
+let max_distane = 100;
 
 
 module.exports.line_check = (name, map, stops) => {

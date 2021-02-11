@@ -105,9 +105,13 @@ module.exports.post_location = (req, res) => {
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
                     database.updateBusInfo(bus);
-                    res.status(200).send({
-                        message: "DONE."
-                    });
+                    for (let j=0;j<database.lines.length;j++){
+                        if (database.buses[i].line==dataase.lines[j].index){
+                            res.status(200).send(JSON.stringify(database.lines[j].map));
+                            break;
+                        }
+                    }
+                        
                     break;
                 }
             }
@@ -447,6 +451,47 @@ module.exports.update_bus = (req, res) => {
 
 //..................................................................
 
+//check buses out of bounds.
+module.exports.out_of_bounds = (req, res) => {
+    let buses_l=[];
+        
+    database.checkToken(req.header("token"), (result) => {
+        for(let i=0;i<database.lines.length;i++){
+            for(let j=0;j<database.buses.length;j++){
+                if (database.lines[i].index==database.buses[j].line){
+                    if(!check.in_line(databas.buses[j].loc.lat, database.buses[j].loc.long, database.lines[i].map)){
+                        buses_l.push(database.buses[j]);
+                        database.addOutOfBoundsBus(database.buses[j])
+                    }
+                }
+            }
+        }
+        res.status(200).send(JSON.stringify(buses_l));
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+    
+}
+
+//.....................................................................
+
+//send out of bounds history.
+module.exports.out_of_bounds_history = (req, res) => {
+
+    database.checkToken(req.header("token"), (result) => {
+        getOutOfBoundsBuses((result)=>{
+            res.sratuse(200).send(JSON.stringify(result));
+        })
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+    
+}
+
+
 
 /*    let q =url.parse(req.url, true).query;    */
-
