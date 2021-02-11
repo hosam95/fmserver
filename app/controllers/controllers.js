@@ -202,7 +202,7 @@ module.exports.add_or_update_line = (req, res) => {
 //..................................................................
 
 // Add a new bus.
-module.exports.add_bus = (req, res) => {
+module.exports.add_or_update_bus = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
             let imei = req.params.imei;
@@ -235,17 +235,19 @@ module.exports.add_bus = (req, res) => {
                 });
             }
 
-            if (!check.bus_is_new(imei, database.buses)) {
-                test = false;
-                res.status(403).send({
-                    message: "Bus already exist!"
-                });
-            }
-
             if (test) {
                 bus_c.imei = imei;
                 bus_c.line = q.line;
-                database.addBus(bus_c);
+                bus_c.driver = q.driver;
+                bus_c.active = q.active == 'true';
+
+                if (!check.bus_is_new(imei, database.buses)) {
+                    database.updateBusInfoWithImei(q.imei, bus_c);
+                }
+                else {
+                    database.addBus(bus_c);
+                }
+
                 res.status(200).send({
                     message: "DONE."
                 });

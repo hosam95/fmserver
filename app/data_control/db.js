@@ -180,6 +180,28 @@ class Database {
   }
 
   /**
+   * Updates the bus info if a bus with existing IMEI
+   * 
+   * @param {string} imei The Bus imei
+   */
+  updateBusInfoWithImei(imei, bus) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var busQuery = { imei: imei };
+      var newBus = { $set: bus };
+      dbo.collection("buses").updateOne(busQuery, newBus, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    var idx = this.#buses.findIndex(x => x.imei == imei);
+    this.#buses[idx] = bus;
+  }
+
+  /**
    * Removes a line from the database
    * 
    * @param {Line} line The Line data

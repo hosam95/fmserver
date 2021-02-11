@@ -11,7 +11,7 @@ module.exports = app => {
     app.post("/line/:name", data.add_or_update_line);
 
     // Ad a new bus.
-    app.post("/bus/:imei", data.add_bus);
+    app.post("/bus/:imei", data.add_or_update_bus);
 
     //send out of bounds buses.
     app.get("/outofbounds",data.out_of_bounds);
