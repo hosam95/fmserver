@@ -42,7 +42,7 @@ class Database {
   /**
    * Gets the current buses
    * 
-   * @returns {object[]}
+   * @returns {Bus[]}
    *  The current buses
    */
   get buses() {
@@ -219,6 +219,50 @@ class Database {
     });
     var idx = this.#buses.findIndex(x => x.imei == bus.imei);
     this.#buses.splice(idx, 1);
+  }
+
+  /**
+   * Adds a out of bounds bus to the database
+   * 
+   * @param {Bus} bus The bus data
+   */
+  addOutOfBoundsBus(bus) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var outOfBoundsBus = { bus: bus, time: new Date() };
+      dbo.collection("outOfBoundsBuses").insertOne(outOfBoundsBus, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+  }
+
+  /**
+   * Callback for getting out of bounds buses
+   * 
+   * @callback getOutOfBoundsCallback
+   * @param {object[]} result Out of bounds buses
+   */
+
+  /**
+   * Gets out of bounds bus from the database
+   * 
+   * @param {getOutOfBoundsCallback} callback Callback for getting out of bounds buses
+   */
+  getOutOfBoundsBuses(callback) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      dbo.collection("outOfBoundsBuses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
+        if (err) throw err;
+
+        callback(result);
+        db.close();
+      });
+    });
   }
 
   /**
