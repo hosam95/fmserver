@@ -2,16 +2,19 @@ const data = require("../controllers/controllers.js");
 
 module.exports = app => {
     //Log In.
-    app.post("/login",data.log_in);
+    app.post("/login", data.log_in);
+
+    // Validate token
+    app.post("/validate", data.validate_token);
 
     // Create a new line.
     app.post("/line/:name", data.add_line);
 
     // Ad a new bus.
     app.post("/bus/:imei", data.add_bus);
-    
+
     //Send buses location.
-    app.get("/buses" , data.get_buses);
+    app.get("/buses", data.get_buses);
 
     // Send the map data.
     app.get('/lines', data.get_map);
@@ -23,7 +26,7 @@ module.exports = app => {
     app.delete("/bus/:imei", data.remove_bus);
 
     // Update the data of a bus.
-    app.put("/bus/:imei", data.update_bus);   
+    app.put("/bus/:imei", data.update_bus);
 
     //upload the Bus Location.
     app.put("/bus/:imei/location", data.post_location);
@@ -31,5 +34,5 @@ module.exports = app => {
     /* // Send the database tables.
     app.get("/data", data.send_db);
    */
-  
-  };
+
+};
