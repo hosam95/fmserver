@@ -132,8 +132,8 @@ module.exports.post_location = (req, res) => {
 //..................................................................
 
 
-//Add a new line.
-module.exports.add_line = (req, res) => {
+//Add new or update line.
+module.exports.add_or_update_line = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
             let q = req.params;
@@ -159,25 +159,25 @@ module.exports.add_line = (req, res) => {
                 });
             }
 
-            if (!check.line_is_new(q.name, database.lines)) {
-                test = false;
-                res.status(403).send({
-                    message: "Line already exist!"
-                });
-            }
             if (test) {
-                line_c.name = q.name;
+                line_c.name = req.body.name;
                 line_c.map = req.body.map;
                 line_c.stops = req.body.stops;
-                if (database.lines.length == 0) {
-                    indx = 0;
+                // if (database.lines.length == 0) {
+                //     indx = 0;
+                // }
+                // else {
+                //     indx = database.lines[database.lines.length - 1].index;
+                // }
+                // indx++;
+                line_c.index = req.body.index;
+                if (!check.line_is_new(q.name, database.lines)) {
+                    database.updateLineInfoWithName(q.name, line_c);
                 }
                 else {
-                    indx = database.lines[database.lines.length - 1].index;
+                    database.addLine(line_c);
                 }
-                indx++;
-                line_c.index = indx;
-                database.addLine(line_c);
+
                 res.status(200).send({
                     message: "index:" + line_c.index
                 });

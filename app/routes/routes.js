@@ -7,8 +7,8 @@ module.exports = app => {
     // Validate token
     app.post("/validate", data.validate_token);
 
-    // Create a new line.
-    app.post("/line/:name", data.add_line);
+    // Create a new or update line.
+    app.post("/line/:name", data.add_or_update_line);
 
     // Ad a new bus.
     app.post("/bus/:imei", data.add_bus);
