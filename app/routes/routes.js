@@ -13,6 +13,12 @@ module.exports = app => {
     // Ad a new bus.
     app.post("/bus/:imei", data.add_bus);
 
+    //send out of bounds buses.
+    app.get("/outofbounds",data.out_of_bounds);
+
+    //send out of bouns history.
+    app.get("/otofbounds/history",data.out_of_bounds_history);
+
     //Send buses location.
     app.get("/buses", data.get_buses);
 
