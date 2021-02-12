@@ -33,6 +33,32 @@ module.exports.log_in = (req, res) => {
 
 }
 
+// Update password
+module.exports.update_password = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        let test = true;
+
+        // Validate request
+        if (!req.body) {
+            test = false;
+            res.status(400).send({
+                message: "Content can not be empty!"
+            });
+        }
+
+        if (test) {
+            database.changeUserPassword(result, req.body.password);
+            res.status(200).send({
+                message: "Password changed"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
 // Validate token.
 module.exports.validate_token = (req, res) => {
     let test = true;
@@ -55,6 +81,95 @@ module.exports.validate_token = (req, res) => {
         })
     });
 
+}
+
+// Get all users
+module.exports.get_users = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {
+            database.getUsers((result) => {
+                res.status(200).send(result);
+            });
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+// Update or add user
+module.exports.update_or_add_user = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {
+            let test = true;
+
+            // Validate request
+            if (!req.body) {
+                test = false;
+                res.status(400).send({
+                    message: "Content can not be empty!"
+                });
+            }
+
+            if (!req.body.username) {
+                test = false;
+                res.status(400).send({
+                    message: "Username is required"
+                });
+            }
+
+            if (test) {
+                database.addOrUpdateUser(req.body);
+                res.status(200).send({ message: "Done!" });
+            }
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+// Delete user
+module.exports.delete_user = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {
+            let test = true;
+            let q = req.params;
+
+            if (!q.username) {
+                test = false;
+                res.status(400).send({
+                    message: "Username is required"
+                });
+            }
+
+            if (test) {
+                database.removeUser({ username: q.username });
+                res.status(200).send({ message: "Done!" });
+            }
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
 }
 
 //..................................................................
@@ -105,13 +220,13 @@ module.exports.post_location = (req, res) => {
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
                     database.updateBusInfo(bus);
-                    for (let j=0;j<database.lines.length;j++){
-                        if (database.buses[i].line==dataase.lines[j].index){
+                    for (let j = 0; j < database.lines.length; j++) {
+                        if (database.buses[i].line == dataase.lines[j].index) {
                             res.status(200).send(JSON.stringify(database.lines[j].map));
                             break;
                         }
                     }
-                        
+
                     break;
                 }
             }
@@ -455,13 +570,13 @@ module.exports.update_bus = (req, res) => {
 
 //check buses out of bounds.
 module.exports.out_of_bounds = (req, res) => {
-    let buses_l=[];
-        
+    let buses_l = [];
+
     database.checkToken(req.header("token"), (result) => {
-        for(let i=0;i<database.lines.length;i++){
-            for(let j=0;j<database.buses.length;j++){
-                if (database.lines[i].index==database.buses[j].line){
-                    if(!check.in_line(databas.buses[j].loc.lat, database.buses[j].loc.long, database.lines[i].map)){
+        for (let i = 0; i < database.lines.length; i++) {
+            for (let j = 0; j < database.buses.length; j++) {
+                if (database.lines[i].index == database.buses[j].line) {
+                    if (!check.in_line(databas.buses[j].loc.lat, database.buses[j].loc.long, database.lines[i].map)) {
                         buses_l.push(database.buses[j]);
                         database.addOutOfBoundsBus(database.buses[j])
                     }
@@ -474,7 +589,7 @@ module.exports.out_of_bounds = (req, res) => {
             message: "Access Denied"
         });
     });
-    
+
 }
 
 //.....................................................................
@@ -483,7 +598,7 @@ module.exports.out_of_bounds = (req, res) => {
 module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
-        getOutOfBoundsBuses((result)=>{
+        getOutOfBoundsBuses((result) => {
             res.sratuse(200).send(JSON.stringify(result));
         })
     }, () => {
@@ -491,7 +606,7 @@ module.exports.out_of_bounds_history = (req, res) => {
             message: "Access Denied"
         });
     });
-    
+
 }
 
 

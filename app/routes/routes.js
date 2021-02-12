@@ -7,6 +7,18 @@ module.exports = app => {
     // Validate token
     app.post("/validate", data.validate_token);
 
+    // Update password
+    app.post("/updatepassword", data.update_password);
+
+    // Get all users
+    app.get("/users", data.get_users);
+
+    // Update or add user
+    app.post("/users", data.update_or_add_user);
+
+    // Delete user
+    app.delete("/users/:username", data.delete_user);
+
     // Create a new or update line.
     app.post("/line/:name", data.add_or_update_line);
 

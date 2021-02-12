@@ -401,6 +401,111 @@ class Database {
       });
     });
   }
+
+  changeUserPassword(user, newPassword) {
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var query = { username: user.username };
+
+      var shasum = crypto.createHash('sha1')
+      shasum.update(newPassword)
+      var hashedPassword = shasum.digest('hex')
+
+      var newValues = { $set: { password: hashedPassword } };
+      dbo.collection("users").updateOne(query, newValues, (err, result) => {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+  }
+
+  addOrUpdateUser(user) {
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var hashedPassword = ''
+      if (user.password) {
+        var shasum = crypto.createHash('sha1')
+        shasum.update(user.password)
+        hashedPassword = shasum.digest('hex')
+      }
+
+      var dbo = db.db(dbName);
+      var query = { username: user.username };
+
+      dbo.collection("users").findOne(query, function (err, res) {
+        if (err) throw err;
+
+        if (!res) {
+          MongoClient.connect(dbUri, function (err, db) {
+            if (err) throw err;
+
+            var dbo = db.db(dbName);
+            dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
+              if (err) throw err;
+
+              db.close();
+            });
+          });
+        }
+
+        else {
+          MongoClient.connect(dbUri, function (err, db) {
+            if (err) throw err;
+
+            var dbo = db.db(dbName);
+            var newValues = { $set: {} }
+            if (user.password) {
+              newValues.$set.password = hashedPassword;
+            }
+
+            if (user.role) {
+              newValues.$set.role = user.role;
+            }
+            dbo.collection("users").updateOne(query, newValues, function (err, res) {
+              if (err) throw err;
+
+              db.close();
+            });
+          });
+        }
+
+        db.close();
+      });
+    });
+  }
+
+  removeUser(user) {
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var query = { username: user.username };
+
+      dbo.collection("users").deleteOne(query, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+  }
+
+  getUsers(callback) {
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("users").find({}, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
+        if (err) throw err;
+
+        callback(result);
+        db.close();
+      });
+    });
+  }
 }
 
 
