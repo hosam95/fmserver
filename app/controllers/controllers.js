@@ -599,7 +599,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         getOutOfBoundsBuses((result) => {
-            res.sratuse(200).send(JSON.stringify(result));
+            res.status(200).send(JSON.stringify(result));
         })
     }, () => {
         res.status(401).send({
