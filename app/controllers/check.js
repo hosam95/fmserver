@@ -1,4 +1,4 @@
-let max_distane = 100;
+let max_distance = 100;
 
 
 module.exports.line_check = (name, map, stops) => {
@@ -87,7 +87,7 @@ module.exports.posted_location = (imei, q, buses) => {
 
 module.exports.in_line = (lat, long, map) => {
     for (let i = 1; i < map.length; i++) {
-        if (getDistanceFromLatLonInKm(lat, long, lat + distance(map[i - 1].lat, map[i - 1].long, map[i].lat, map[i].long, lat, long), long) / 1000 < max_distane) {
+        if (getDistanceFromLatLonInKm(lat, long, lat + distance(map[i - 1].lat, map[i - 1].long, map[i].lat, map[i].long, lat, long), long) * 1000 < max_distance) {
             return true;
         }
     }

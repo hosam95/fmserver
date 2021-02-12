@@ -3,9 +3,8 @@ const check = require("./check");
 const url = require('url');
 const { response } = require('express');
 const { json } = require("body-parser")
-/*
-let lines =[];
-let BUSES =[];*/
+
+let outOfBoundsBuses = [];
 let indx = 0;
 let database = db.getInstance();
 
@@ -211,7 +210,6 @@ module.exports.post_location = (req, res) => {
         }
 
         if (test) {
-            let i = 0;
             let bus;
             for (let i = 0; i < database.buses.length; i++) {
                 if (imei == database.buses[i].imei) {
@@ -221,7 +219,18 @@ module.exports.post_location = (req, res) => {
                     bus.time = Math.round(new Date().getTime() / 1000);
                     database.updateBusInfo(bus);
                     for (let j = 0; j < database.lines.length; j++) {
-                        if (database.buses[i].line == dataase.lines[j].index) {
+                        if (database.buses[i].line == database.lines[j].name) {
+                            if (!check.in_line(bus.loc.lat, bus.loc.long, database.lines.find(x => x.name == bus.line).map)) {
+                                if (!outOfBoundsBuses.find(x => x.imei === bus.imei)) {
+                                    outOfBoundsBuses.push(bus);
+                                    database.addOutOfBoundsBus(bus);
+                                }
+                            }
+                            else {
+                                let deleteIndex = outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
+                                outOfBoundsBuses.splice(deleteIndex, 1);
+                            }
+
                             res.status(200).send(JSON.stringify(database.lines[j].map));
                             break;
                         }
@@ -570,20 +579,15 @@ module.exports.update_bus = (req, res) => {
 
 //check buses out of bounds.
 module.exports.out_of_bounds = (req, res) => {
-    let buses_l = [];
-
     database.checkToken(req.header("token"), (result) => {
-        for (let i = 0; i < database.lines.length; i++) {
-            for (let j = 0; j < database.buses.length; j++) {
-                if (database.lines[i].index == database.buses[j].line) {
-                    if (!check.in_line(databas.buses[j].loc.lat, database.buses[j].loc.long, database.lines[i].map)) {
-                        buses_l.push(database.buses[j]);
-                        database.addOutOfBoundsBus(database.buses[j])
-                    }
-                }
-            }
+        if (result.role === 'admin') {
+            res.status(200).send(JSON.stringify(outOfBoundsBuses));
         }
-        res.status(200).send(JSON.stringify(buses_l));
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
     }, () => {
         res.status(401).send({
             message: "Access Denied"
@@ -598,9 +602,16 @@ module.exports.out_of_bounds = (req, res) => {
 module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
-        getOutOfBoundsBuses((result) => {
-            res.status(200).send(JSON.stringify(result));
-        })
+        if (result.role === 'admin') {
+            getOutOfBoundsBuses((result) => {
+                res.status(200).send(JSON.stringify(result));
+            })
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
     }, () => {
         res.status(401).send({
             message: "Access Denied"
