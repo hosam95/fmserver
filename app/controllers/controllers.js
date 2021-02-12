@@ -218,35 +218,20 @@ module.exports.post_location = (req, res) => {
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
                     database.updateBusInfo(bus);
-                    for (let j = 0; j < database.lines.length; j++) {
-                        if (database.buses[i].line == database.lines[j].name) {
-                            if (!check.in_line(bus.loc.lat, bus.loc.long, database.lines.find(x => x.name == bus.line).map)) {
-                                if (!outOfBoundsBuses.find(x => x.imei === bus.imei)) {
-                                    outOfBoundsBuses.push(bus);
-                                    database.addOutOfBoundsBus(bus);
-                                }
-                            }
-                            else {
-                                let deleteIndex = outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
-                                outOfBoundsBuses.splice(deleteIndex, 1);
-                            }
-
-                            res.status(200).send(JSON.stringify(database.lines[j].map));
-                            break;
+                    let lineMap = database.lines.find(x => x.name == bus.line).map
+                    if (!check.in_line(bus.loc.lat, bus.loc.long, lineMap)) {
+                        if (!outOfBoundsBuses.find(x => x.imei === bus.imei)) {
+                            outOfBoundsBuses.push(bus);
+                            database.addOutOfBoundsBus(bus);
                         }
                     }
-
-                    break;
-                }
-            }
-
-            for (let j = 0; j < database.lines.length; j++) {
-                if (database.lines[j].index == bus.line) {
-                    if (!check.in_line(q.latitude, q.longitude, lines[j].map)) {
-                        /*########################################################################################
-                        fire the alert.
-                        ########################################################################################*/
+                    else {
+                        let deleteIndex = outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
+                        outOfBoundsBuses.splice(deleteIndex, 1);
                     }
+
+                    res.status(200).send(JSON.stringify(lineMap));
+                    break;
                 }
             }
         }
