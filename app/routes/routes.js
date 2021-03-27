@@ -33,9 +33,11 @@ module.exports = app => {
 
     //Send buses location.
     app.get("/buses", data.get_buses);
+    app.get("/buses/:imei", data.get_bus);
 
     // Send the map data.
     app.get('/lines', data.get_map);
+    app.get('/lines/:name', data.get_line);
 
     // Delete a line with line-name.
     app.delete("/line/:name", data.remove_line);

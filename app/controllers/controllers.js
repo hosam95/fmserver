@@ -178,11 +178,29 @@ module.exports.get_buses = (req, res) => {
     res.status(200).send(JSON.stringify(database.buses));
 }
 
+module.exports.get_bus = (req, res) => {
+    let q = req.params;
+    let bus = database.buses.find(x => q.imei == x.imei);
+    if (bus)
+        res.status(200).send(JSON.stringify(bus));
+    else
+        res.status(404).send('{"error": "Bus not found"}');
+}
+
 //..................................................................
 
 // Send the map data.
 module.exports.get_map = (req, res) => {
     res.status(200).send(JSON.stringify(database.lines));
+}
+
+module.exports.get_line = (req, res) => {
+    let q = req.params;
+    let line = database.lines.find(x => q.name == x.name);
+    if (line)
+        res.status(200).send(JSON.stringify(line));
+    else
+        res.status(404).send('{"error": "Line not found"}');
 }
 
 //..................................................................
