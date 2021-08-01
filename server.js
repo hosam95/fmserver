@@ -4,6 +4,9 @@ var cors = require('cors')
 const bodyParser = require('body-parser');
 const cn = require("./app/controllers/controllers.js");
 const db = require('./app/data_control/db.js').Database;
+var check= requier('./app/controllers/check.js');
+
+const block_ip_period=10*60*1000; //endUser location sening period.
 
 let database = db.getInstance();
 const app = express();
@@ -37,3 +40,8 @@ setInterval(() => {
     }
   }
 }, 6000);
+
+setInterval(()=>{
+  check.bad_ip=[];
+  check.good_ips.clear_and_balance();
+},block_ip_period)
