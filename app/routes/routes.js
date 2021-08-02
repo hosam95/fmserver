@@ -1,6 +1,13 @@
 const data = require("../controllers/controllers.js");
 
 module.exports = app => {
+
+    //send current location.
+    app.post ("/enduser/:line/location",data.add_enduser_location);
+
+    // get the endusers locations.
+    app.get("/bus/:imei",data.get_endusers_locations);
+
     //Log In.
     app.post("/login", data.log_in);
 
@@ -22,7 +29,7 @@ module.exports = app => {
     // Create a new or update line.
     app.post("/line/:name", data.add_or_update_line);
 
-    // Ad a new bus.
+    // Add a new bus.
     app.post("/bus/:imei", data.add_or_update_bus);
 
     //send out of bounds buses.
