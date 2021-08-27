@@ -5,16 +5,120 @@ const { response } = require('express');
 const { json } = require("body-parser")
 
 let outOfBoundsBuses = [];
+let locations= [];
 let indx = 0;
 let database = db.getInstance();
 
-// Log In.
-module.exports.log_in = (req, res) => {
+// post user location
+module.exports.add_enduser_location=(req,res) => {
     let test = true;
+    let line = req.params.line;
+    let q = url.parse(req.url, true).query;
+    let ip = req.socket.localAddress;
+
+    if(check.is_bad_ip(ip)){
+        res.status(401).send({
+            message:"request denied."
+        });
+        return ;
+    }
 
     // Validate request
     if (!req.body) {
-        test = false;
+        test=false;
+        res.status(400).send({
+            message: "Content can not be empty!"
+        });
+    }
+
+
+    if (check.line_is_new(line, database.lines)) {
+        test=false;
+        res.status(404).send ({
+            message:"line not found"
+        });
+    }
+
+    if (!check.posted_location(q)){
+        test=false;
+        res.status(400).send ({
+            message:""
+        });
+    }
+    
+    if(!check.ip_check(ip)){
+        res.status(40).send ({
+            message :"request denied."
+        });
+        return ;
+    }
+    
+    if (test){
+        //add to the memory.
+        let location_c={long=q.longitude,lat=q.latitude};
+        let user_c={ip=ip,loc=location_c};
+        let flag =true;
+        let user_exist=false;
+        for (let i=0; i < locations.legth ;i++){
+            if (locations[i].name==line){
+                flag=false;
+                for(let j=0;j<locations[i].users.length;j++){
+                    if(locations[i].users[j].ip==ip){
+                        user_exist=true;
+                        locations[i].users[j].loc=location_c;
+                    }
+                }
+                if(!user_exist){
+                    locations[i].users.push(user_c);
+                }
+            }
+        }
+        if(flag){
+            let line_c={name=line,users=[]};
+            line_c.users.push(user_c);
+            locations.push(line_c);
+        }
+    }
+}
+
+// get end users locations.
+module.exports.get_endusers_locations=(req,res)=>{
+    database.checkToken(req.header("token"),(result)=>{
+        let imei=req.params.imei;
+        //Validate request.
+        if(!req.body){
+            res.status(400).send({
+                message:"content can not be empty!"
+            });
+            return ;
+        }
+
+        let line;
+        for (let i = 0; i < database.buses.length; i++) {
+            if (imei == database.buses[i].imei) {
+                line = database.buses[i].line;
+            }
+        }
+        
+        //send the locations.
+        for (let i=0; i < locations.legth ;i++){
+            if (locations[i].name==line){
+                res.status(200).send(locations[i].users);
+            }
+        }
+
+    },()=>{
+        res.status(401).send({
+            message:"Access Denied"
+        });
+    });
+}
+
+// Log In.
+module.exports.log_in = (req, res) => {
+
+    // Validate request
+    if (!req.body) {
         res.status(400).send({
             message: "Content can not be empty!"
         });
@@ -220,7 +324,15 @@ module.exports.post_location = (req, res) => {
             });
         }
 
-        if (!check.posted_location(imei, q, database.buses)) {
+        if (check.bus_is_new(imei,database.buses))
+        {
+            test=false;
+            res.status(404).send({
+                message:"bus not found!"
+            });
+        }
+
+        if (!check.posted_location(q)) {
             test = false;
             res.status(400).send({
                 message: "Content structure is not correct!"
