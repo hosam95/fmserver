@@ -4,7 +4,7 @@ var cors = require('cors')
 const bodyParser = require('body-parser');
 const cn = require("./app/controllers/controllers.js");
 const db = require('./app/data_control/db.js').Database;
-var check= requier('./app/controllers/check.js');
+var check= require('./app/controllers/check.js');
 
 const block_ip_period=10*60*1000; //endUser location sening period.
 
