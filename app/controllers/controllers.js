@@ -55,8 +55,8 @@ module.exports.add_enduser_location=(req,res) => {
     
     if (test){
         //add to the memory.
-        let location_c={long=q.longitude,lat=q.latitude};
-        let user_c={ip=ip,loc=location_c};
+        let location_c={long:q.longitude,lat:q.latitude};
+        let user_c={ip:ip,loc:location_c};
         let flag =true;
         let user_exist=false;
         for (let i=0; i < locations.legth ;i++){
@@ -74,7 +74,7 @@ module.exports.add_enduser_location=(req,res) => {
             }
         }
         if(flag){
-            let line_c={name=line,users=[]};
+            let line_c={name:line,users:[]};
             line_c.users.push(user_c);
             locations.push(line_c);
         }
