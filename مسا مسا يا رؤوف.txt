@@ -42,8 +42,8 @@ http://localhost:3000/enduser/:line/location?longitude=..&latitude=..
 http://localhost:3000/enduser/اسكان_خزان/location?longitude=113.909813&latitude=22.583197
 
 10- get the endusers locations.     (get)       {}
-http://localhost:3000/buse/:imei
-http://localhost:3000/buse/1
+http://localhost:3000/bus/:imei/users
+http://localhost:3000/bus/1/users
 
 
 -download DB.               (get)      

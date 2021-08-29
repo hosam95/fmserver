@@ -6,7 +6,7 @@ module.exports = app => {
     app.post ("/enduser/:line/location",data.add_enduser_location);
 
     // get the endusers locations.
-    app.get("/bus/:imei",data.get_endusers_locations);
+    app.get("/bus/:imei/users",data.get_endusers_locations);
 
     //Log In.
     app.post("/login", data.log_in);
