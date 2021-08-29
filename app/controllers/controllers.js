@@ -115,7 +115,7 @@ module.exports.get_endusers_locations = (req, res) => {
         //send the locations.
         for (let i = 0; i < locations.length; i++) {
             if (locations[i].name == line) {
-                res.status(200).send(locations[i].users);
+                res.status(200).send(locations[i].users.map((user) => user.loc));
                 return;
             }
         }
