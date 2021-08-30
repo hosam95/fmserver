@@ -47,7 +47,7 @@ module.exports.add_enduser_location = (req, res) => {
     }
 
     if (!check.ip_check(ip)) {
-        res.status(400).send({
+        res.status(429).send({
             message: "request denied."
         });
         return;
@@ -79,7 +79,7 @@ module.exports.add_enduser_location = (req, res) => {
             locations.push(line_c);
         }
 
-        res.status(400).send({
+        res.status(200).send({
             message: "Location Added"
         });
     }
