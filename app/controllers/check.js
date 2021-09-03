@@ -232,7 +232,6 @@ class BinarySearchTree
         // return node
         else{
             let node_c=node;
-            node.time=Math.round(new Date().getTime() / 1000);
             return node_c;
         }
     }
@@ -365,12 +364,13 @@ module.exports.is_bad_ip =(ip)=>{
 
 module.exports.ip_check=(ip)=> {
     let n =this.good_ips.search(ip);
+
     if (n==null){
         this.good_ips.insert(ip,Math.round(new Date().getTime() / 1000));
         return true;
     }
-
-    if(n.time - Math.round(new Date().getTime() / 1000) < send_loc_period-1){
+    
+    if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
         this.bad_ip.push(ip);
         this.good_ips.remove(ip);
         return false;
