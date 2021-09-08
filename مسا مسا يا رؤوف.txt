@@ -45,6 +45,10 @@ http://localhost:3000/enduser/اسكان_خزان/location?longitude=113.909813&
 http://localhost:3000/bus/:imei/users
 http://localhost:3000/bus/1/users
 
+11- stop sharing location.          (post)      {}
+http://localhost:3000/enduser/hide/:line
+http://localhost:3000/enduser/hide/line1
+
 
 -download DB.               (get)      
 # not done yet.

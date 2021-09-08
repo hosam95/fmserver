@@ -44,4 +44,14 @@ setInterval(() => {
 setInterval(()=>{
   check.bad_ip=[];
   check.good_ips.clear_and_balance();
-},block_ip_period)
+},block_ip_period);
+
+setInterval(()=>{
+  for (let i = 0; i < cn.locations.length; i++) {
+    for (let j = 0; j < this.locations[i].users.length; j++) {
+      if ((Math.round(new Date().getTime() / 1000) -cn.locations[i].users[j].time) > 1200) {
+        cn.locations[i].users.splice(j,1);
+      }
+    }
+  }
+},1800000);
