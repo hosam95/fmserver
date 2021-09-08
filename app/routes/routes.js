@@ -2,8 +2,11 @@ const data = require("../controllers/controllers.js");
 
 module.exports = app => {
 
+    //stop sharing location.
+    app.post("/enduser/hide/:line",data.remove_enduser_location);
+
     //send current location.
-    app.post ("/enduser/:line/location",data.add_enduser_location);
+    app.post("/enduser/:line/location",data.add_enduser_location);
 
     // get the endusers locations.
     app.get("/bus/:imei/users",data.get_endusers_locations);
