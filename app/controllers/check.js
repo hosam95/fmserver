@@ -231,13 +231,15 @@ class BinarySearchTree
         // if data is equal to the node data
         // return node
         else{
-            let node_c=node;
+            let node_c={ip:node.ip,time:node.time};
+            node.time=Math.round(new Date().getTime() / 1000);
             return node_c;
         }
     }
 }
 
 module.exports. good_ips= new BinarySearchTree();
+module.exports. r_good_ips= new BinarySearchTree();
 
 
 module.exports.line_check = (name, map, stops) => {
@@ -362,19 +364,39 @@ module.exports.is_bad_ip =(ip)=>{
     return false;
 }
 
-module.exports.ip_check=(ip)=> {
-    let n =this.good_ips.search(ip);
+module.exports.ip_check=(ip,tree)=> {
+    if(tree=="add"){
+        let n =this.good_ips.search(ip);
 
-    if (n==null){
-        this.good_ips.insert(ip,Math.round(new Date().getTime() / 1000));
+        if (n==null){
+            this.good_ips.insert(ip,Math.round(new Date().getTime() / 1000));
+            return true;
+        }
+        
+        if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
+            this.bad_ip.push(ip);
+            this.good_ips.remove(ip);
+            return false;
+        }
+        
         return true;
     }
-    
-    if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
-        this.bad_ip.push(ip);
-        this.good_ips.remove(ip);
-        return false;
+    else if (tree=="remove"){
+        let n =this.r_good_ips.search(ip);
+
+        if (n==null){
+            this.r_good_ips.insert(ip,Math.round(new Date().getTime() / 1000));
+            return true;
+        }
+        
+        if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
+            this.bad_ip.push(ip);
+            this.r_good_ips.remove(ip);
+            return false;
+        }
+        
+        return true;
     }
+    else{return "a7a"}
     
-    return true;
 }

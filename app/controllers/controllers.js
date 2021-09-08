@@ -5,9 +5,50 @@ const { response } = require('express');
 const { json } = require("body-parser")
 
 let outOfBoundsBuses = [];
-let locations = [];
+module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
+
+//stop sharing location.
+module.exports.remove_enduser_location =(req,res) => {
+    let line =req.params.line;
+    let ip= req.socket.localAddress;
+
+    if (check.is_bad_ip(ip)) {
+        res.status(401).send({
+            message: "request denied."
+        });
+        return;
+    }
+
+
+    if (check.line_is_new(line,database.lines)){
+        res.status(404).send({
+            message : "line not found"
+        });
+        return;
+    }
+
+    if (!check.ip_check(ip,"remove")) {
+        res.status(429).send({
+            message: "request denied."
+        });
+        return;
+    }
+
+    for (let i = 0; i < this.locations.length; i++) {
+        if (this.locations[i].name == line) {
+            for (let j = 0; j < this.locations[i].users.length; j++) {
+                if (this.locations[i].users[j].ip == ip) {
+                    this.locations[i].users.splice(j,1);
+                }
+            }
+        }
+    }
+    res.status(200).send({
+        message: "location removed."
+    });
+}
 
 // post user location
 module.exports.add_enduser_location = (req, res) => {
@@ -46,7 +87,7 @@ module.exports.add_enduser_location = (req, res) => {
         });
     }
 
-    if (!check.ip_check(ip)) {
+    if (!check.ip_check(ip,"add")) {
         res.status(429).send({
             message: "request denied."
         });
@@ -56,27 +97,27 @@ module.exports.add_enduser_location = (req, res) => {
     if (test) {
         //add to the memory.
         let location_c = { long: q.longitude, lat: q.latitude };
-        let user_c = { ip: ip, loc: location_c };
+        let user_c = { ip: ip, loc: location_c ,time: Math.round(new Date().getTime() / 1000) };
         let flag = true;
         let user_exist = false;
-        for (let i = 0; i < locations.length; i++) {
-            if (locations[i].name == line) {
+        for (let i = 0; i < this.locations.length; i++) {
+            if (this.locations[i].name == line) {
                 flag = false;
-                for (let j = 0; j < locations[i].users.length; j++) {
-                    if (locations[i].users[j].ip == ip) {
+                for (let j = 0; j < this.locations[i].users.length; j++) {
+                    if (this.locations[i].users[j].ip == ip) {
                         user_exist = true;
-                        locations[i].users[j].loc = location_c;
+                        this.locations[i].users[j].loc = location_c;
                     }
                 }
                 if (!user_exist) {
-                    locations[i].users.push(user_c);
+                    this.locations[i].users.push(user_c);
                 }
             }
         }
         if (flag) {
             let line_c = { name: line, users: [] };
             line_c.users.push(user_c);
-            locations.push(line_c);
+            this.locations.push(line_c);
         }
 
         res.status(200).send({
@@ -113,9 +154,9 @@ module.exports.get_endusers_locations = (req, res) => {
         }
 
         //send the locations.
-        for (let i = 0; i < locations.length; i++) {
-            if (locations[i].name == line) {
-                res.status(200).send(locations[i].users.map((user) => user.loc));
+        for (let i = 0; i < this.locations.length; i++) {
+            if (this.locations[i].name == line) {
+                res.status(200).send(this.locations[i].users.map((user) => user.loc));
                 return;
             }
         }
