@@ -49,7 +49,6 @@ http://localhost:3000/bus/1/users
 http://localhost:3000/enduser/hide/:line
 http://localhost:3000/enduser/hide/line1
 
-
 -download DB.               (get)      
 # not done yet.
 ------------------------------------------
