@@ -49,9 +49,9 @@ setInterval(()=>{
 setInterval(()=>{
   for (let i = 0; i < cn.locations.length; i++) {
     for (let j = 0; j < this.locations[i].users.length; j++) {
-      if ((Math.round(new Date().getTime() / 1000) -cn.locations[i].users[j].time) > 1200) {
+      if ((Math.round(new Date().getTime() / 1000) -cn.locations[i].users[j].time) > 10) {
         cn.locations[i].users.splice(j,1);
       }
     }
   }
-},1800000);
+},60000);
