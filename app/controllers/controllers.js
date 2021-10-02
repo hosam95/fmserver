@@ -40,7 +40,7 @@ module.exports.remove_enduser_location =(req,res) => {
         if (this.locations[i].name == line) {
             for (let j = 0; j < this.locations[i].users.length; j++) {
                 if (this.locations[i].users[j].ip == ip) {
-                    this.locations[i].users.splice(j,1);
+                    this.locations[i].users.splice(j,1);;
                 }
             }
         }
