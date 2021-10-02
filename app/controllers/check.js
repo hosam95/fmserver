@@ -1,5 +1,5 @@
 let max_distance = 100;
-let send_loc_period =5
+let send_loc_period =1/32
 module.exports.bad_ip=[];
 
 // Node class
@@ -11,6 +11,8 @@ class Node
         this.time=time;
         this.left = null;
         this.right = null;
+        this.req_count=0
+        this.periods_summation=0
     }
 }
 
@@ -231,7 +233,9 @@ class BinarySearchTree
         // if data is equal to the node data
         // return node
         else{
-            let node_c={ip:node.ip,time:node.time};
+            node.req_count++;
+            node.periods_summation+=Math.round(new Date().getTime() / 1000)-node.time;
+            let node_c={ip:node.ip,time:node.time,req_count:node.req_count,periods_summation:node.periods_summation};
             node.time=Math.round(new Date().getTime() / 1000);
             return node_c;
         }
@@ -373,12 +377,11 @@ module.exports.ip_check=(ip,tree)=> {
             return true;
         }
         
-        if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
+        if(( n.periods_summation/n.req_count) < send_loc_period){
             this.bad_ip.push(ip);
             this.good_ips.remove(ip);
             return false;
         }
-        
         return true;
     }
     else if (tree=="remove"){
@@ -389,7 +392,7 @@ module.exports.ip_check=(ip,tree)=> {
             return true;
         }
         
-        if(Math.round(new Date().getTime() / 1000 - n.time) < send_loc_period){
+        if(( n.periods_summation/n.req_count) < send_loc_period){
             this.bad_ip.push(ip);
             this.r_good_ips.remove(ip);
             return false;
