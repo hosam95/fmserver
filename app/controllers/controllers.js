@@ -54,7 +54,13 @@ module.exports.remove_enduser_location =(req,res) => {
 module.exports.add_enduser_location = (req, res) => {
     let test = true;
     let line = req.params.line;
+    let end_point=null
     let q = url.parse(req.url, true).query;
+    try{
+        end_point=q.stop;
+    }catch(error){
+        //nothing to do.
+    }
     let ip = req.socket.localAddress;
 
     if (check.is_bad_ip(ip)) {
@@ -97,7 +103,7 @@ module.exports.add_enduser_location = (req, res) => {
     if (test) {
         //add to the memory.
         let location_c = { long: q.longitude, lat: q.latitude };
-        let user_c = { ip: ip, loc: location_c ,time: Math.round(new Date().getTime() / 1000) };
+        let user_c = { ip: ip, loc: location_c ,time: Math.round(new Date().getTime() / 1000),stop:end_point };
         let flag = true;
         let user_exist = false;
         for (let i = 0; i < this.locations.length; i++) {
@@ -107,6 +113,7 @@ module.exports.add_enduser_location = (req, res) => {
                     if (this.locations[i].users[j].ip == ip) {
                         user_exist = true;
                         this.locations[i].users[j].loc = location_c;
+                        this.locations[i].users[j].stop = end_point;
                     }
                 }
                 if (!user_exist) {
@@ -156,7 +163,7 @@ module.exports.get_endusers_locations = (req, res) => {
         //send the locations.
         for (let i = 0; i < this.locations.length; i++) {
             if (this.locations[i].name == line) {
-                res.status(200).send(this.locations[i].users.map((user) => user.loc));
+                res.status(200).send(this.locations[i].users.map((user) => {return {loc:user.loc , stop:user.stop}}));
                 return;
             }
         }
@@ -407,7 +414,7 @@ module.exports.post_location = (req, res) => {
                     bus.time = Math.round(new Date().getTime() / 1000);
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
-                    if (!check.in_line(bus.loc.lat, bus.loc.long, lineMap)) {
+                    if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                         if (!outOfBoundsBuses.find(x => x.imei === bus.imei)) {
                             outOfBoundsBuses.push(bus);
                             database.addOutOfBoundsBus(bus);
