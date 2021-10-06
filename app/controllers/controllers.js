@@ -184,12 +184,12 @@ module.exports.get_endusers_locations = (req, res) => {
 module.exports.log_in = (req, res) => {
 
     // Validate request
-    if (!req.body) {
+    if (!req.body || !req.body.username || !req.body.password) {
         res.status(400).send({
             message: "Content can not be empty!"
         });
     }
-
+    console.log(req.body);
     database.login(req.body.username, req.body.password, (token) => {
         res.status(200).send({
             token: token
