@@ -189,7 +189,7 @@ module.exports.log_in = (req, res) => {
             message: "Content can not be empty!"
         });
     }
-    console.log(req.body);
+    
     database.login(req.body.username, req.body.password, (token) => {
         res.status(200).send({
             token: token
