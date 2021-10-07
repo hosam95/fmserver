@@ -418,18 +418,18 @@ module.exports.post_location = (req, res) => {
                     bus.loc.long = q.longitude;
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
-                    bus.loc.angle=angle;
+                    bus.angle=angle;
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
-                        if (!this.outofBoundsBuses.find(x => x.imei === bus.imei)) {
-                            this.outofBoundsBuses.push(bus);
+                        if (!this.outOfBoundsBuses.find(x => x.imei === bus.imei)) {
+                            this.outOfBoundsBuses.push(bus);
                             database.addOutOfBoundsBus(bus);
                         }
                     }
                     else {
-                        let deleteIndex = this.outofBoundsBuses.findIndex(x => x.imei === bus.imei);
-                        this.outofBoundsBuses.splice(deleteIndex, 1);
+                        let deleteIndex = this.outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
+                        this.outOfBoundsBuses.splice(deleteIndex, 1);
                     }
 
                     res.status(200).send(JSON.stringify(lineMap));
@@ -447,11 +447,13 @@ module.exports.post_location = (req, res) => {
 //calculat the bus location angle.
 function Angle(long1,lat1,long2,lat2){
     //Math.atan(1)*(180/Math.PI)
-    angle=Math.atan(Math.abs((long2-long1)/(lat2-lat1)))*(180/Math.PI)
-    if ((long2-long1)/(lat2-lat1)<0){
-        angle+=180.0
-    }
-    return angle
+    if (long2-long1 == 0) return lat2 > lat1 ? 90 : -90;
+    if (lat2-lat1 == 0) return long2 > long1 ? 0 : 180;
+    angle=Math.atan((lat2-lat1)/(long2-long1))*(180/Math.PI);
+    // if ((long2-long1)/(lat2-lat1)<0){
+    //     angle+=180.0
+    // }
+    return angle;
 }
 //..................................................................
 
@@ -777,7 +779,7 @@ module.exports.update_bus = (req, res) => {
 module.exports.out_of_bounds = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            res.status(200).send(JSON.stringify(this.outofBoundsBuses));
+            res.status(200).send(JSON.stringify(this.outOfBoundsBuses));
         }
         else {
             res.status(401).send({
@@ -799,7 +801,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            getOutOfBoundsBuses((result) => {
+            getoutOfBoundsBuses((result) => {
                 res.status(200).send(JSON.stringify(result));
             })
         }
