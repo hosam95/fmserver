@@ -37,15 +37,18 @@ setInterval(() => {
     }
     else if (database.buses[i].time < time - 5) {
       //send an alert.
+      cn.outOfBoundsBuses.push(database.buses[i])
     }
   }
 }, 6000);
 
+//clear bad ips
 setInterval(()=>{
   check.bad_ip=[];
   check.good_ips.clear_and_balance();
 },block_ip_period);
 
+//clean endusers shared locations
 setInterval(()=>{
   cn.locations.forEach(location => {
     for (let j = 0; j < location.users.length; j++) {

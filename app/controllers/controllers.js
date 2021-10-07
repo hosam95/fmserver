@@ -4,7 +4,7 @@ const url = require('url');
 const { response } = require('express');
 const { json } = require("body-parser")
 
-let outOfBoundsBuses = [];
+module.exports. outOfBoundsBuses = [];
 module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
@@ -57,7 +57,12 @@ module.exports.add_enduser_location = (req, res) => {
     let end_point=null
     let q = url.parse(req.url, true).query;
     try{
-        end_point=q.stop;
+        if (q.end === true || q.end ===false){
+            end_point=q.end;
+        }
+        else{
+            res.status(400).send({message:"request structure error"});
+        }
     }catch(error){
         //nothing to do.
     }
@@ -89,7 +94,7 @@ module.exports.add_enduser_location = (req, res) => {
     if (!check.posted_location(q)) {
         test = false;
         res.status(400).send({
-            message: ""
+            message: "request structure error"
         });
     }
 
@@ -113,7 +118,7 @@ module.exports.add_enduser_location = (req, res) => {
                     if (this.locations[i].users[j].ip == ip) {
                         user_exist = true;
                         this.locations[i].users[j].loc = location_c;
-                        this.locations[i].users[j].stop = end_point;
+                        this.locations[i].users[j].end = end_point;
                     }
                 }
                 if (!user_exist) {
@@ -409,20 +414,22 @@ module.exports.post_location = (req, res) => {
             for (let i = 0; i < database.buses.length; i++) {
                 if (imei == database.buses[i].imei) {
                     bus = database.buses[i];
+                    let angle=Angle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude)
                     bus.loc.long = q.longitude;
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
+                    bus.loc.angle=angle;
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
-                        if (!outOfBoundsBuses.find(x => x.imei === bus.imei)) {
-                            outOfBoundsBuses.push(bus);
+                        if (!this.outofBoundsBuses.find(x => x.imei === bus.imei)) {
+                            this.outofBoundsBuses.push(bus);
                             database.addOutOfBoundsBus(bus);
                         }
                     }
                     else {
-                        let deleteIndex = outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
-                        outOfBoundsBuses.splice(deleteIndex, 1);
+                        let deleteIndex = this.outofBoundsBuses.findIndex(x => x.imei === bus.imei);
+                        this.outofBoundsBuses.splice(deleteIndex, 1);
                     }
 
                     res.status(200).send(JSON.stringify(lineMap));
@@ -437,6 +444,15 @@ module.exports.post_location = (req, res) => {
     });
 }
 
+//calculat the bus location angle.
+function Angle(long1,lat1,long2,lat2){
+    //Math.atan(1)*(180/Math.PI)
+    angle=Math.atan(Math.abs((long2-long1)/(lat2-lat1)))*(180/Math.PI)
+    if ((long2-long1)/(lat2-lat1)<0){
+        angle+=180.0
+    }
+    return angle
+}
 //..................................................................
 
 
@@ -761,7 +777,7 @@ module.exports.update_bus = (req, res) => {
 module.exports.out_of_bounds = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            res.status(200).send(JSON.stringify(outOfBoundsBuses));
+            res.status(200).send(JSON.stringify(this.outofBoundsBuses));
         }
         else {
             res.status(401).send({
