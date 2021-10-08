@@ -420,7 +420,7 @@ module.exports.post_location = (req, res) => {
                     bus.loc.long = q.longitude;
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
-                    bus.loc.angle=angle;
+                    bus.angle=angle;
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
@@ -804,7 +804,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            getOutOfBoundsBuses((result) => {
+            getoutOfBoundsBuses((result) => {
                 res.status(200).send(JSON.stringify(result));
             })
         }
