@@ -57,7 +57,7 @@ module.exports.add_enduser_location = (req, res) => {
     let end_point=null
     let q = url.parse(req.url, true).query;
     try{
-        if (q.end === "true" || q.end ==="false"){
+        if (q.end === "true" || q.end ==="false" || q.end === true || q.end === false ){
             end_point=q.end;
         }
         else{
