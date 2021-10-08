@@ -449,6 +449,7 @@ module.exports.post_location = (req, res) => {
 //calculat the bus location angle.
 function Angle(long1,lat1,long2,lat2){
     //Math.atan(1)*(180/Math.PI)
+<<<<<<< HEAD
     angle=Math.atan((lat2-lat1)/(long2-long1))*(180/Math.PI)
     if (angle<0){
         angle+=180.0;
@@ -457,6 +458,15 @@ function Angle(long1,lat1,long2,lat2){
         angle+=180.0
     }
     return angle
+=======
+    if (long2-long1 == 0) return lat2 > lat1 ? 90 : -90;
+    if (lat2-lat1 == 0) return long2 > long1 ? 0 : 180;
+    angle=Math.atan((lat2-lat1)/(long2-long1))*(180/Math.PI);
+    // if ((long2-long1)/(lat2-lat1)<0){
+    //     angle+=180.0
+    // }
+    return angle;
+>>>>>>> 0827414c7cfa3700372de45ecfd466a6a5c8df0a
 }
 //..................................................................
 
@@ -804,7 +814,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            getoutOfBoundsBuses((result) => {
+            getOutOfBoundsBuses((result) => {
                 res.status(200).send(JSON.stringify(result));
             })
         }
