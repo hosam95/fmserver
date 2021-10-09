@@ -416,7 +416,10 @@ module.exports.post_location = (req, res) => {
             for (let i = 0; i < database.buses.length; i++) {
                 if (imei == database.buses[i].imei) {
                     bus = database.buses[i];
-                    let angle=Angle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude)
+                    let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
+                    let angle = bus.angle;
+                    if(distance > 1e-10)
+                        angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
                     bus.loc.long = q.longitude;
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
@@ -446,17 +449,15 @@ module.exports.post_location = (req, res) => {
     });
 }
 
-//calculat the bus location angle.
-function Angle(long1,lat1,long2,lat2){
+//calculate the bus location angle.
+function calculateAngle(long1,lat1,long2,lat2){
     //Math.atan(1)*(180/Math.PI)
-    angle=Math.atan((lat2-lat1)/(long2-long1))*(180/Math.PI)
-    if (angle<0){
-        angle+=180.0;
-    }
-    if((lat2-lat1)>0){
-        angle+=180.0
-    }
+    angle=Math.atan2(lat2-lat1,long2-long1)*(180/Math.PI);
     return angle
+}
+
+function sqrDistance2Points(x1, y1, x2, y2) {
+    return (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
 }
 //..................................................................
 
