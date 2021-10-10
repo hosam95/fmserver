@@ -191,7 +191,7 @@ class BinarySearchTree
             else{
                 med=((beginning+end)/2)-0.5;
             }
-            this.insert(inordered[med].ip,inordered[med].time);
+            this.insert(this.inordered[med].ip,this.inordered[med].time);
             this.b_insert(beginning,med);
             this.b_insert(med+1,end);
         }
