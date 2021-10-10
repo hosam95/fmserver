@@ -110,7 +110,7 @@ module.exports.add_enduser_location = (req, res) => {
     if (test) {
         //add to the memory.
         let location_c = { long: q.longitude, lat: q.latitude };
-        let user_c = { ip: ip, loc: location_c ,time: Math.round(new Date().getTime() / 1000),stop:end_point };
+        let user_c = { ip: ip, loc: location_c ,time: Math.round(new Date().getTime() / 1000),end:end_point };
         let flag = true;
         let user_exist = false;
         for (let i = 0; i < this.locations.length; i++) {
