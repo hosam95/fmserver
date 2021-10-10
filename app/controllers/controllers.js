@@ -58,7 +58,7 @@ module.exports.add_enduser_location = (req, res) => {
     let q = url.parse(req.url, true).query;
     try{
         if (q.end === "true" || q.end ==="false" || q.end === true || q.end === false ){
-            end_point=q.end;
+            end_point= q.end === "true" || q.end === true;
         }
         else{
             test=false;
@@ -170,7 +170,7 @@ module.exports.get_endusers_locations = (req, res) => {
         //send the locations.
         for (let i = 0; i < this.locations.length; i++) {
             if (this.locations[i].name == line) {
-                res.status(200).send(this.locations[i].users.map((user) => {return {loc:user.loc , stop:user.stop}}));
+                res.status(200).send(this.locations[i].users.map((user) => {return {loc:user.loc , end:user.end}}));
                 return;
             }
         }
