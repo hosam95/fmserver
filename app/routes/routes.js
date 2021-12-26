@@ -35,6 +35,9 @@ module.exports = app => {
     // Add a new bus.
     app.post("/bus/:imei", data.add_or_update_bus);
 
+    // Set enable bus
+    app.post("/bus/:imei/setactive", data.setActiveBus);
+
     //send out of bounds buses.
     app.get("/outofbounds", data.out_of_bounds);
 

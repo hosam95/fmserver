@@ -598,6 +598,28 @@ module.exports.add_or_update_bus = (req, res) => {
 
 //..................................................................
 
+// Set enable bus
+module.exports.setActiveBus = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        let imei = req.params.imei;
+        let q = url.parse(req.url, true).query;
+
+        let active = q.active == 'true';
+
+        database.updateBusInfoWithImei(imei, {active: active});
+
+        res.status(200).send({
+            message: "DONE."
+        });
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+
+
+}
+
 // Remove a line.
 module.exports.remove_line = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
