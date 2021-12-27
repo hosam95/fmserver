@@ -353,14 +353,14 @@ module.exports.delete_user = (req, res) => {
 
 // Send the buses data.
 module.exports.get_buses = (req, res) => {
-    res.status(200).send(JSON.stringify(database.buses));
+    res.status(200).send(database.buses);
 }
 
 module.exports.get_bus = (req, res) => {
     let q = req.params;
     let bus = database.buses.find(x => q.imei == x.imei);
     if (bus)
-        res.status(200).send(JSON.stringify(bus));
+        res.status(200).send(bus);
     else
         res.status(404).send('{"error": "Bus not found"}');
 }
@@ -369,14 +369,14 @@ module.exports.get_bus = (req, res) => {
 
 // Send the map data.
 module.exports.get_map = (req, res) => {
-    res.status(200).send(JSON.stringify(database.lines));
+    res.status(200).send(database.lines);
 }
 
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line = database.lines.find(x => q.name == x.name);
     if (line)
-        res.status(200).send(JSON.stringify(line));
+        res.status(200).send(line);
     else
         res.status(404).send('{"error": "Line not found"}');
 }
@@ -438,7 +438,7 @@ module.exports.post_location = (req, res) => {
                         this.outOfBoundsBuses.splice(deleteIndex, 1);
                     }
 
-                    res.status(200).send(JSON.stringify(lineMap));
+                    res.status(200).send(lineMap);
                     break;
                 }
             }
@@ -806,7 +806,7 @@ module.exports.update_bus = (req, res) => {
 module.exports.out_of_bounds = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            res.status(200).send(JSON.stringify(this.outOfBoundsBuses));
+            res.status(200).send(this.outOfBoundsBuses);
         }
         else {
             res.status(401).send({
@@ -829,7 +829,7 @@ module.exports.out_of_bounds_history = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
             getOutOfBoundsBuses((result) => {
-                res.status(200).send(JSON.stringify(result));
+                res.status(200).send(result);
             })
         }
         else {

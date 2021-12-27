@@ -198,7 +198,7 @@ class Database {
       });
     });
     var idx = this.#buses.findIndex(x => x.imei == imei);
-    this.#buses[idx] = bus;
+    this.#buses[idx] = { ...this.#buses[idx], ...bus };
   }
 
   /**
