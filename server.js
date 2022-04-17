@@ -38,6 +38,8 @@ setInterval(() => {
     else if (database.buses[i].time < time - 5) {
       //send an alert.
       cn.outOfBoundsBuses.push(database.buses[i])
+      database.buses[i].active=false;
+
     }
   }
 }, 6000);
