@@ -431,11 +431,13 @@ module.exports.post_location = (req, res) => {
                         if (!this.outOfBoundsBuses.find(x => x.imei === bus.imei)) {
                             this.outOfBoundsBuses.push(bus);
                             database.addOutOfBoundsBus(bus);
+                            database.buses[i].active=false;
                         }
                     }
                     else {
                         let deleteIndex = this.outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
                         this.outOfBoundsBuses.splice(deleteIndex, 1);
+                        database.buses[i].active=true;
                     }
 
                     res.status(200).send(lineMap);
