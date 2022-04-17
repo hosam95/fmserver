@@ -1,4 +1,6 @@
 const express = require('express');
+const {Server} =require ("socket.io");
+const {createServer} = require ('http');
 const config = require('config');
 var cors = require('cors')
 const bodyParser = require('body-parser');
@@ -10,6 +12,8 @@ const block_ip_period=10*60*1000; //endUser location sening period.
 
 let database = db.getInstance();
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, { /* options */ });
 
 // parse requests of content-type: application/json
 app.use(bodyParser.json());
@@ -25,10 +29,15 @@ app.use(cors(corsOptions))
 app.use(bodyParser.urlencoded({ extended: true }));
 
 require("./app/routes/routes.js")(app);
+require("./app/routes/ws_routes.js")(io);
 
 app.listen(config.get('app.port'), () => {
   console.log(`Server is running on port ${config.get('app.port')}.`);
 });
+httpServer.listen(config.get('app.ws_port'), () => {
+  console.log(`WebSocket is running on port ${config.get('app.ws_port')}.`);
+});
+
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
@@ -39,7 +48,6 @@ setInterval(() => {
       //send an alert.
       cn.outOfBoundsBuses.push(database.buses[i])
       database.buses[i].active=false;
-
     }
   }
 }, 6000);
