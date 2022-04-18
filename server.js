@@ -37,9 +37,11 @@ setInterval(() => {
     }
     else if (database.buses[i].time < time - 5) {
       //send an alert.
+      let bus=database.buses[i];
+      bus.active=false;
+      database.updateBusInfo(bus);
       cn.outOfBoundsBuses.push(database.buses[i])
-      database.buses[i].active=false;
-
+      database.addOutOfBoundsBus(bus);
     }
   }
 }, 6000);

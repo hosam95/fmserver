@@ -429,15 +429,19 @@ module.exports.post_location = (req, res) => {
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                         if (!this.outOfBoundsBuses.find(x => x.imei === bus.imei)) {
+                            bus.active=false;
+                            database.updateBusInfo(bus);
                             this.outOfBoundsBuses.push(bus);
                             database.addOutOfBoundsBus(bus);
-                            database.buses[i].active=false;
                         }
                     }
                     else {
                         let deleteIndex = this.outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
-                        this.outOfBoundsBuses.splice(deleteIndex, 1);
-                        database.buses[i].active=true;
+                        if(deleteIndex==-1){
+                            this.outOfBoundsBuses.splice(deleteIndex, 1);
+                            bus.active=true;
+                            database.updateBusInfo(bus);
+                        }
                     }
 
                     res.status(200).send(lineMap);
