@@ -41,7 +41,6 @@ setInterval(() => {
       bus.active=false;
       database.updateBusInfo(bus);
       cn.outOfBoundsBuses.push(database.buses[i])
-      database.addOutOfBoundsBus(bus);
     }
   }
 }, 6000);
