@@ -1,7 +1,9 @@
 const db = require('../data_control/db.js').Database;
 var axios = require('axios');
 const check = require('./check')
+const hash_map=require("../models/hash map");
 
+var CarsMap=new hash_map();
 let database = db.getInstance();
 let places=[]
 var api_key=null
@@ -16,7 +18,8 @@ var lat=null
     looking for a car,
     car on the way,
     picked up,
-    canceled,
+    user canceled,
+    driver cancelde,
     done
     } 
  */
@@ -232,26 +235,11 @@ module.exports. driver_update_location = (socket_id,location) =>{//not used yet.
 }
 
 module.exports.order = (ride) => {
-    for (driver in drivers){
-        let flag=true
-        for (id in ride.rejection_ids){
-            if(driver.driver_id==id || !driver.free){
-                flag=false
-                break
-            }
-        }
-        if(flag){
-            socket.to(driver.socket_id).emit('order',ride)
-            return;
-        }
+    let car=CarsMap.search(ride.origin,ride.rejection_ids);
+    if(car.id==null){
+        return false;
     }
-
-    if(drivers.length!= 0){
-        socket.to(database.getenduser(ride.user_id).socket_id).emit('request status',{status:'request rejected'})
-    }
-    else{
-        socket.to(database.getenduser(ride.user_id).socket_id).emit('request status',{status:'no cars available'})
-    }
+    this.send("driver",car.id,"order",ride);
 }
 
 module.exports. get_data_by_socket_id= (role,socket_id) => {
@@ -401,4 +389,18 @@ module.exports. update = (role, opjct) => {
             }
         }
     }
+}
+
+module.exports. send=(role,id,str,opj)=>{
+    if(role=="driver"){
+        if(drivers_sockets.has(id)){
+            socket.to(drivers_sockets.get(id)).emit(str,opj);
+        }
+        else database.driverqueue(id,str.opj);
+        return;
+    }
+    if(endusers_sockets.has(id)){
+        socket.to(endusers_sockets.get(id)).emit(str,opj);
+    }
+    else database.enduserqueue(id,str.opj);
 }

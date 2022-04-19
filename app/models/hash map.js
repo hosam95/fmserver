@@ -54,7 +54,7 @@ class CarsMap{
         this.#cars.delete(id);
     }
     
-    search(loc){
+    search(loc,rejection_ids){
         if(this.#cars.size==0){
             return null;
         }
@@ -62,21 +62,21 @@ class CarsMap{
         let lat =Math.round(loc.lat*this.#rounder)/this.#rounder;
         let long =Math.round(loc.long*this.#rounder)/this.#rounder;
         //search in the 9 center cells.
-        let nearest=this.#nearest_in_cell(lat,long,loc);
-        let r1=this.#nearest_in_radius(loc,1);
+        let nearest=this.#nearest_in_cell(lat,long,loc,rejection_ids);
+        let r1=this.#nearest_in_radius(loc,1,rejection_ids);
         if(r1.distance<nearest.distance){
             nearest=r1;
         }
 
         //search wider if needed.
         if(nearest.id==null){
-            return this.#nearest_in_radius(loc,2).id;
+            return this.#nearest_in_radius(loc,2,rejection_ids).id;
         }
 
         return nearest.id;
     }
 
-    #nearest_in_radius(loc,r){
+    #nearest_in_radius(loc,r,rejection_ids){
         let lat =Math.round(loc.lat*this.#rounder)/this.#rounder;
         let long =Math.round(loc.long*this.#rounder)/this.#rounder;
         let nearest={
@@ -85,7 +85,7 @@ class CarsMap{
         };
         let x=r,y=r,is_x=true,a=1;
         for(let i=0;i<r*8;i++){
-            let nearest_c=this.#nearest_in_cell(lat+(x/this.#rounder),long+(y/this.#rounder),loc);
+            let nearest_c=this.#nearest_in_cell(lat+(x/this.#rounder),long+(y/this.#rounder),loc,rejection_ids);
             if(nearest_c.distance<nearest.distance){
                 nearest=nearest_c;
             }
@@ -110,12 +110,12 @@ class CarsMap{
             return nearest;
         }
         if(nearest.id==null){
-            return this.#nearest_in_radius(loc,r+1)
+            return this.#nearest_in_radius(loc,r+1,rejection_ids)
         }
         return nearest
     }
 
-    #nearest_in_cell(cell_lat,cell_long,loc){
+    #nearest_in_cell(cell_lat,cell_long,loc,rejection_ids){
         let nearest={
             distance:1000000,
             id:null
@@ -130,10 +130,14 @@ class CarsMap{
             return nearest;
         }
         this.#map.get(cell_lat).get(cell_long).forEach((value,key)=>{
-            let a=((value.lat-loc.lat)*(value.lat-loc.lat))+((value.long-loc.long)*(value.long-loc.long));
-            if(a<nearest.distance){
-                nearest.distance=a;
-                nearest.id=key;
+            if(drivers.get(drivers_sockets.get(key)).free){
+                if(!rejection_ids.has(key)){
+                    let a=((value.lat-loc.lat)*(value.lat-loc.lat))+((value.long-loc.long)*(value.long-loc.long));
+                    if(a<nearest.distance){
+                        nearest.distance=a;
+                        nearest.id=key;
+                    }
+                }
             }
         })
         return nearest;
