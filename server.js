@@ -32,7 +32,7 @@ app.listen(config.get('app.port'), () => {
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
-  for (let i = 0; i < database.buses.lingth; i++) {
+  for (let i = 0; i < database.buses.length; i++) {
     if (database.buses[i].time == null) {
     }
     else if (database.buses[i].time < time - 5) {
