@@ -40,7 +40,7 @@ setInterval(() => {
       let bus=database.buses[i];
       bus.active=false;
       database.updateBusInfo(bus);
-      cn.outOfBoundsBuses.push(database.buses[i])
+      cn.disconnected.set(database.buses[i].imei,database.buses[i]);
     }
   }
 }, 6000);

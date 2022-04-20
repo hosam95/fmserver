@@ -4,7 +4,8 @@ const url = require('url');
 const { response } = require('express');
 const { json } = require("body-parser")
 
-module.exports. outOfBoundsBuses = [];
+module.exports. outOfBoundsBuses = new map();
+module.exports. disconnected=new map();
 module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
@@ -428,21 +429,22 @@ module.exports.post_location = (req, res) => {
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
-                        if (!this.outOfBoundsBuses.find(x => x.imei === bus.imei)) {
+                        if (!this.outOfBoundsBuses.has(bus.imei)) {
                             bus.active=false;
                             database.updateBusInfo(bus);
-                            this.outOfBoundsBuses.push(bus);
+                            this.outOfBoundsBuses.set(bus.imei,bus);
                             database.addOutOfBoundsBus(bus);
                         }
                     }
                     else {
-                        let deleteIndex = this.outOfBoundsBuses.findIndex(x => x.imei === bus.imei);
-                        if(deleteIndex==-1){
-                            this.outOfBoundsBuses.splice(deleteIndex, 1);
+                        if(this.outOfBoundsBuses.has(bus.imei)){
+                            this.outOfBoundsBuses.delete(bus.imei);
                             bus.active=true;
                             database.updateBusInfo(bus);
                         }
                     }
+
+                    if(this.disconnected.has(bus.imei)) this.disconnected.delete(bus.imei);
 
                     res.status(200).send(lineMap);
                     break;

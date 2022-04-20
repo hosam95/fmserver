@@ -39,7 +39,7 @@ module.exports = app => {
     app.post("/bus/:imei/setactive", data.setActiveBus);
 
     //send out of bounds buses.
-    app.get("/outofbounds", data.out_of_bounds);
+    app.get("/outofbounds/current", data.out_of_bounds);
 
     //send out of bouns history.
     app.get("/outofbounds/history", data.out_of_bounds_history);
