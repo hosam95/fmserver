@@ -11,6 +11,9 @@ var radius=null
 var long=null
 var lat=null
 
+var time_table=new Map();
+this.TTSeter();
+
 /**
  * 
  * @note :ride.status could only be{
@@ -114,6 +117,9 @@ module.exports.on_order = (input) => {
     var ride=input.ride
     ride.status='looking for a car'
     ride.id=this.generte_random_id();/**@todo: assign the id right before saving in memory */
+    ride.user_id=this.get_data_by_socket_id("enduser",socket.id).enduser.id;
+    let t=Math.round(new Date().getTime() / 1000);
+    time_table.set(t%10,time_table.get(t%10).append(ride));
     this.order(ride);
 }
 
@@ -403,4 +409,10 @@ module.exports. send=(role,id,str,opj)=>{
         socket.to(endusers_sockets.get(id)).emit(str,opj);
     }
     else database.enduserqueue(id,str.opj);
+}
+
+module.exports. TTSeter =()=>{
+    for(let i=0;i<10;i++){
+        time_table.set(i,[]);
+    }
 }
