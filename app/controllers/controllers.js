@@ -4,8 +4,8 @@ const url = require('url');
 const { response } = require('express');
 const { json } = require("body-parser")
 
-module.exports. outOfBoundsBuses = new map();
-module.exports. disconnected=new map();
+module.exports. outOfBoundsBuses = new Map();
+module.exports. disconnected=new Map();
 module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
