@@ -429,9 +429,9 @@ module.exports.post_location = (req, res) => {
                     database.updateBusInfo(bus);
                     let lineMap = database.lines.find(x => x.name == bus.line).map
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
+                        bus.active=false;
+                        database.updateBusInfo(bus);
                         if (!this.outOfBoundsBuses.has(bus.imei)) {
-                            bus.active=false;
-                            database.updateBusInfo(bus);
                             this.outOfBoundsBuses.set(bus.imei,bus);
                             database.addOutOfBoundsBus(bus);
                         }
