@@ -444,8 +444,11 @@ module.exports.post_location = (req, res) => {
                         }
                     }
 
-                    if(this.disconnected.has(bus.imei)) this.disconnected.delete(bus.imei);
-
+                    if(this.disconnected.has(bus.imei)){
+                        this.disconnected.delete(bus.imei);
+                        bus.active=true;
+                        database.updateBusInfo(bus);
+                    }
                     res.status(200).send(lineMap);
                     break;
                 }
