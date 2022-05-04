@@ -869,7 +869,7 @@ module.exports.testing=(req,res)=>{
                 let map=database.lines[i].map;
                 let d=100000;
                 for(let j=1;j<=map.length;j++){
-                    let d_c=this.get_distance(map[j-1].lat,map[j-1].long,map[j].lat,map[j].req.lat,req.long);
+                    let d_c=this.get_distance(map[j-1].lat,map[j-1].long,map[j].lat,map[j].req.params.lat,req.params.long);
                     if(d>d_c)d=d_c;
                 }
                 console.log(database.lines[i].name);
