@@ -1,4 +1,4 @@
-let max_distance = 10;
+let max_distance = 100;
 let send_loc_period =1/32
 module.exports.bad_ip=[];
 
