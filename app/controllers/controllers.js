@@ -856,6 +856,44 @@ module.exports.out_of_bounds_history = (req, res) => {
 
 }
 
-
-
+//************************************************************************** */
 /*    let q =url.parse(req.url, true).query;    */
+module.exports.testing=(req,res)=>{
+    
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {
+            //testing api.
+            //write the test script here.
+
+            for (let i = 0; i < database.lines.length; i++) {
+                let map=database.lines[i].map;
+                let d=100000;
+                for(let j=1;j<=map.length;j++){
+                    let d_c=this.get_distance(map[j-1].lat,map[j-1].long,map[j].lat,map[j].req.lat,req.long);
+                    if(d>d_c)d=d_c;
+                }
+                console.log(database.lines[i].name);
+                console.log(d);
+            }
+        
+            res.status(200).send({
+                message: "DONE."
+            });
+
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+    
+}
+module.exports.get_distance=(x1,y1,x2,y2,x,y)=>{
+    let d=Math.abs(((x2-x1)*(y1-y))-((x1-x)*(y2-y1)))/Math.sqrt(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1)));
+    return d;
+}

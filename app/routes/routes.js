@@ -66,6 +66,9 @@ module.exports = app => {
 
     /* // Send the database tables.
     app.get("/data", data.send_db);
-   */
+    */
+    //testing api.
+    app.get('/test', data.testing);
+
 
 };
