@@ -21,7 +21,7 @@ this.TTSeter();
     looking for a car,
     car on the way,
     picked up,
-    user canceled,
+    user cancelled,
     driver cancelde,
     done
     } 
@@ -150,25 +150,27 @@ module.exports.cancel = (input) => {
             distance:d,
             price:3+(d*3),
         }
-        ride.status="cnceled"
+        ride.status="cncelled"
         database.newride(ride)
     }
-    socket.to(this.get_data_by_id("driver",ride.driver_id).socket_id).emit("ride canceled",ride);
-    socket.to(socket.id).emit("ride canceled",ride);
+    socket.to(this.get_data_by_id("driver",ride.driver_id).socket_id).emit("ride cancelled",ride);
+    socket.to(socket.id).emit("ride cancelled",ride);
     this.remove_ride(ride);
 }
 
 //.................................................................................................................
 
 module.exports. driver_live_location = (input) => {
-    let d = 0
-    for (driver in drivers){
-        if (driver.socket_id == socket.id){
-            d=check.getDistanceFromLatLonInKm(input.location.lat,input.location.long,driver.location.lat,driver.location.long);
-            driver.location = location;
-            driver.estimated_distance+=d
+    let driver=this.get_data_by_socket_id(socket.id);
+    if(driver.current_ride!=null){
+        let ride=this.get_ride(driver.current_ride);
+        if(ride.status=="car on the way"){
+            this.send("enduser",ride.user_id,"car_location",input.location,null);
         }
     }
+    CarsMap.set({id:driver.id,lat:input.location.lat,long:input.location.long});
+    /**@todo:calculate thedistance from the last location.*/ 
+     /*to calculate the price if the ride got calcelled in the middle of the way. */
 }
 
 module.exports.driver_on_accepte = (input) => {
@@ -240,17 +242,13 @@ module.exports.driver_on_reject = (input) => {
 }
 
 module.exports.driver_on_pickup = (input) => {
-    let ride=input.ride;
+    let ride=this.get_ride(input.ride_id);
     ride.status="picked up";
-    ride.driver_id=this.get_data_by_socket_id("driver",socket.id).driver.id;
-    rides.push(ride);
-    socket.to(this.get_data_by_id("enduser",ride.user_id).socket_id).emit("picked up",{})
+    this.update_ride(ride,true,true);
+    this.send("enduser",ride.user_id,"picked up",{},null);
 
-    for (driver in drivers){
-        if (driver.socket_id == socket_id){
-            driver.estimated_distance=0
-        }
-    }
+    /**@todo:set the distance to 0.*/ 
+     /*to calculate the price if the ride got calcelled in the middle of the way. */
 }
 
 module.exports.driver_on_arrive = (input) =>{
