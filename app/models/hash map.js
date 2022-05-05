@@ -131,7 +131,7 @@ class CarsMap{
         }
         this.#map.get(cell_lat).get(cell_long).forEach((value,key)=>{
             if(drivers.get(drivers_sockets.get(key)).free){
-                if(!rejection_ids.has(key)){
+                if(!rejection_ids.ids.has(key)){
                     let a=((value.lat-loc.lat)*(value.lat-loc.lat))+((value.long-loc.long)*(value.long-loc.long));
                     if(a<nearest.distance){
                         nearest.distance=a;

@@ -7,6 +7,8 @@ const bodyParser = require('body-parser');
 const cn = require("./app/controllers/controllers.js");
 const db = require('./app/data_control/db.js').Database;
 var check= require('./app/controllers/check.js');
+const ws_controllers = require("./app/controllers/ws_controllers.js");
+
 
 const block_ip_period=10*60*1000; //endUser location sening period.
 
@@ -68,3 +70,9 @@ setInterval(()=>{
     }
   });
 },60000);
+
+//set the orders loop timer.
+setInterval(()=>{
+  let time =Math.round(new Date.getTime() /1000);
+  ws_controllers.orders_timer(time%10);
+},1000)
