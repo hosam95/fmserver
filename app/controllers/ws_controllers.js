@@ -23,12 +23,12 @@ this.TTSeter();
     picked up,
     user cancelled,
     driver cancelde,
-    done
+    arrived
     } 
  */
 module.exports.autocomplete = (input) => {
     //create a new sessiontoken if doesn't exist.
-    var user=this.get_data_by_socket_id("enduser",socket.id)
+    var user=this.get_data_by_socket_id("enduser",socket.id).enduser;
     if(user.session_token==null){
         user.session_token=require('@google/maps').util.placesAutoCompleteSessionToken()
         this.update("enduser",user)
@@ -56,7 +56,7 @@ module.exports.autocomplete = (input) => {
 
 module.exports.estimate = (input) => {
     //set the sessiontoken value to null.
-    var user=this.get_data_by_socket_id("enduser",socket.id)
+    var user=this.get_data_by_socket_id("enduser",socket.id).enduser;
     user.session_token=null;
     this.update("enduser",user)
 
@@ -161,7 +161,7 @@ module.exports.cancel = (input) => {
 //.................................................................................................................
 
 module.exports. driver_live_location = (input) => {
-    let driver=this.get_data_by_socket_id(socket.id);
+    let driver=this.get_data_by_socket_id("driver",socket.id).driver;
     if(driver.current_ride!=null){
         let ride=this.get_ride(driver.current_ride);
         if(ride.status=="car on the way"){
@@ -175,7 +175,7 @@ module.exports. driver_live_location = (input) => {
 
 module.exports.driver_on_accepte = (input) => {
     let ride_id=input.ride_id;
-    let driver=this.get_data_by_socket_id("driver",socket.id);
+    let driver=this.get_data_by_socket_id("driver",socket.id).deriver;
     
     if(!driver.free){
         this.send("driver",null,"error",{error:"you already have a ride."},socket.id);
@@ -252,18 +252,21 @@ module.exports.driver_on_pickup = (input) => {
 }
 
 module.exports.driver_on_arrive = (input) =>{
-    driver = get_data_by_socket_id("driver",socket.id).driver
+    driver = get_data_by_socket_id("driver",socket.id).driver;
+    driver.free=true;
+    driver.current_ride=null;
+    this.update("driver",deriver,true,true);
+
     ride= this.get_ride(driver.current_ride)
-    ride.done.distance=this.get_distance(ride.id)
-    ride.done.price= 3+(3*ride.distance)
-    database.newride(ride)
+    ride.status="arrived";
+    this.update_ride(ride,false,true);
     this.remove_ride(ride)
-    driver.current_ride=null
-    database.updatedriver_by_id(driver.id,driver)
-    enduser = this.get_data_by_id("enduser",ride.enduser_id)
-    enduser.enduser.current_ride=null
-    database.upbateenduser_by_id(enduser.enduser.id,enduser.enduser)
-    socket.to(socket.id, enduser.socket_id).emit("arrived", ride)
+
+    enduser = this.get_data_by_id("enduser",ride.enduser_id).enduser;
+    enduser.current_ride=null
+    this.update("enduser",enduser,true,true);
+    
+    this.send("enduser",enduser.id,"arrived",{ride_id:ride.id},null);
 }
 
 
