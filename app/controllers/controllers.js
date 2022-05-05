@@ -895,6 +895,6 @@ module.exports.testing=(req,res)=>{
     
 }
 module.exports.get_distance=(x1,y1,x2,y2,x,y)=>{
-    let d=Math.abs(((x2-x1)*(y1-y))-((x1-x)*(y2-y1)))/Math.sqrt(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1)));
-    return d;
+    let d=(((x2-x1)*(y1-y))-((x1-x)*(y2-y1)))**2/(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1)));
+    return Math.sqrt(d);
 }
