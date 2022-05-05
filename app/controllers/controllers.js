@@ -2,10 +2,11 @@ const db = require('../data_control/db.js').Database;
 const check = require("./check");
 const url = require('url');
 const { response } = require('express');
-const { json } = require("body-parser")
+const { json } = require("body-parser");
+const { set } = require('express/lib/application');
 
-module.exports. outOfBoundsBuses = new Map();
-module.exports. disconnected=new Map();
+module.exports. outOfBoundsBuses = new set();
+module.exports. disconnected=new set();
 module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
@@ -432,7 +433,7 @@ module.exports.post_location = (req, res) => {
                         bus.active=false;
                         database.updateBusInfo(bus);
                         if (!this.outOfBoundsBuses.has(bus.imei)) {
-                            this.outOfBoundsBuses.set(bus.imei,bus.imei);
+                            this.outOfBoundsBuses.add(bus.imei);
                             database.addOutOfBoundsBus(bus);
                         }
                     }
@@ -817,7 +818,7 @@ module.exports.update_bus = (req, res) => {
 module.exports.out_of_bounds = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            res.status(200).send({outofbounds:Object.fromEntries(this.outOfBoundsBuses), disconnected:Object.fromEntries(this.disconnected)});
+            res.status(200).send({outofbounds:this.outOfBoundsBuses, disconnected:this.disconnected});
         }
         else {
             res.status(401).send({
