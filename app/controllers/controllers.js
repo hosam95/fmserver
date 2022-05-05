@@ -817,7 +817,7 @@ module.exports.update_bus = (req, res) => {
 module.exports.out_of_bounds = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            res.status(200).send({outofbounds:Array.from(this.outOfBoundsBuses), disconnected:Array.from(this.disconnected)});
+            res.status(200).send({outofbounds:Object.fromEntries(this.outOfBoundsBuses), disconnected:Object.fromEntries(this.disconnected)});
         }
         else {
             res.status(401).send({
