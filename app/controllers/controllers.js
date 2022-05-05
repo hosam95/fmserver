@@ -432,7 +432,7 @@ module.exports.post_location = (req, res) => {
                         bus.active=false;
                         database.updateBusInfo(bus);
                         if (!this.outOfBoundsBuses.has(bus.imei)) {
-                            this.outOfBoundsBuses.set(bus.imei,bus);
+                            this.outOfBoundsBuses.set(bus.imei,bus.imei);
                             database.addOutOfBoundsBus(bus);
                         }
                     }
