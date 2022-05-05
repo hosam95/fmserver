@@ -5,8 +5,8 @@ const { response } = require('express');
 const { json } = require("body-parser");
 const { set } = require('express/lib/application');
 
-module.exports. outOfBoundsBuses = new set();
-module.exports. disconnected=new set();
+module.exports. outOfBoundsBuses = new Set();
+module.exports. disconnected=new Set();
 module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
