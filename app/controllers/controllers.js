@@ -868,13 +868,17 @@ module.exports.testing=(req,res)=>{
 
             for (let i = 0; i < database.lines.length; i++) {
                 let map=database.lines[i].map;
-                let d=100000;
+                let line_array=[];
                 for(let j=1;j<map.length;j++){
-                    let d_c=this.get_distance(map[j-1].lat,map[j-1].long,map[j].lat,map[j].long,req.body.lat,req.body.long);
-                    if(d>d_c)d=d_c;
+                    line_array.push([map[j].lat,map[j].long])
                 }
+
+                var pt = turf.point([req.body.lat, req.body.long]);
+                var line = turf.lineString(line_array);
+
+                var distance = turf.pointToLineDistance(pt, line, {units: 'kilometers'});
                 console.log(database.lines[i].name);
-                console.log(d);
+                console.log(distance);
             }
         
             res.status(200).send({
