@@ -335,7 +335,7 @@ module.exports.in_line = (lat, long, map) => {
         line_array.push([map[j].lat,map[j].long])
     }
 
-    var pt = turf.point([req.body.lat, req.body.long]);
+    var pt = turf.point([lat, long]);
     var line = turf.lineString(line_array);
     var distance = (turf.pointToLineDistance(pt, line, {units: 'kilometers'}))/1000;
     if(distance>max_distance)return false;
