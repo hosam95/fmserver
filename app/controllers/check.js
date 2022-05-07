@@ -338,8 +338,11 @@ module.exports.in_line = (lat, long, map) => {
     var pt = turf.point([lat, long]);
     var line = turf.lineString(line_array);
     var distance = (turf.pointToLineDistance(pt, line, {units: 'kilometers'}))/1000;
-    if(distance>max_distance)return false;
-    
+    if(distance>max_distance){
+        console.log(distance);
+
+        return false;
+    }
     return true;
 }
 
