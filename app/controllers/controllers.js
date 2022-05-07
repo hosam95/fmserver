@@ -866,20 +866,7 @@ module.exports.testing=(req,res)=>{
             //testing api.
             //write the test script here.
 
-            for (let i = 0; i < database.lines.length; i++) {
-                let map=database.lines[i].map;
-                let line_array=[];
-                for(let j=1;j<map.length;j++){
-                    line_array.push([map[j].lat,map[j].long])
-                }
-
-                var pt = turf.point([req.body.lat, req.body.long]);
-                var line = turf.lineString(line_array);
-
-                var distance = turf.pointToLineDistance(pt, line, {units: 'kilometers'});
-                console.log(database.lines[i].name);
-                console.log(distance);
-            }
+            
         
             res.status(200).send({
                 message: "DONE."
@@ -897,8 +884,4 @@ module.exports.testing=(req,res)=>{
         });
     });
     
-}
-module.exports.get_distance=(x1,y1,x2,y2,x,y)=>{
-    let d=(((x2-x1)*(y1-y))-((x1-x)*(y2-y1)))**2/(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1)));
-    return Math.sqrt(d);
 }
