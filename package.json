@@ -13,6 +13,7 @@
   "author": "Hosam Saeid",
   "license": "ISC",
   "dependencies": {
+    "@turf/turf": "^6.5.0",
     "body-parser": "^1.19.0",
     "config": "^3.3.3",
     "cors": "^2.8.5",
@@ -20,6 +21,6 @@
     "express": "^4.17.1",
     "mongodb": "^3.6.4",
     "mysql": "^2.18.1",
-    "snyk": "^1.662.0"
+    "snyk": "^1.921.0"
   }
 }

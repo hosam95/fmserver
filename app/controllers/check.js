@@ -1,6 +1,8 @@
-let max_distance = 100;
+const turf = require("@turf/turf");
+let max_distance = 150;
 let send_loc_period =1/32
 module.exports.bad_ip=[];
+
 
 // Node class
 class Node
@@ -328,35 +330,17 @@ module.exports.posted_location = (q) => {
 }
 
 module.exports.in_line = (lat, long, map) => {
-    for (let i = 1; i < map.length; i++) {
-        if (getDistanceFromLatLonInKm(lat, long, lat + distance(map[i - 1].lat, map[i - 1].long, map[i].lat, map[i].long, lat, long), long) * 1000 < max_distance) {
-            return true;
-        }
+    let line_array=[];
+    for(let j=1;j<map.length;j++){
+        line_array.push([map[j].lat,map[j].long])
     }
-    return false;
-}
 
-
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    var R = 6371; // Radius of the earth in km
-    var dLat = deg2rad(lat2 - lat1);  // deg2rad below
-    var dLon = deg2rad(lon2 - lon1);
-    var a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        ;
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    var d = R * c; // Distance in km
-    return d;
-}
-
-function deg2rad(deg) {
-    return deg * (Math.PI / 180)
-}
-
-function distance(t1, g1, t2, g2, T, G) {
-    return ((T * g1) - (T * g2) - (G * t1) + (G * t2) - (g1 * t2) + (g2 * t1)) / Math.sqrt((t1 * t1) + (t2 * t2) - (2 * t1 * t2) + (g1 * g1) + (g2 * g2) - (2 * g1 * g2));
+    var pt = turf.point([req.body.lat, req.body.long]);
+    var line = turf.lineString(line_array);
+    var distance = (turf.pointToLineDistance(pt, line, {units: 'kilometers'}))/1000;
+    if(distance>max_distance)return false;
+    
+    return true;
 }
 
 module.exports.is_bad_ip =(ip)=>{
