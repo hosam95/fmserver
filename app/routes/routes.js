@@ -2,6 +2,8 @@ const data = require("../controllers/controllers.js");
 
 module.exports = app => {
 
+    /*BUSES APIs:- */
+
     //stop sharing location.
     app.post("/enduser/hide/:line",data.remove_enduser_location);
 
@@ -64,11 +66,26 @@ module.exports = app => {
     //upload the Bus Location.
     app.put("/bus/:imei/location", data.post_location);
 
-    /* // Send the database tables.
-    app.get("/data", data.send_db);
-    */
     //testing api.
     app.get('/test', data.testing);
 
+    /* // Send the database tables.
+    app.get("/data", data.send_db);
+    */
+   /**************************************************************************************************************** */
+    //TICKETS APIs:-
 
+    //driver:
+    app.post("/ticket/new",);
+
+    app.get("/ticket/score",);
+
+    //admin:
+    app.get("/ticket/overview",);
+
+    app.post("",)
+
+    app.get("/ticket/driver",)
+
+    app.get("/ticket/driver/bus/price",)
 };
