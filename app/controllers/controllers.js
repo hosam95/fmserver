@@ -432,11 +432,11 @@ module.exports.post_location = (req, res) => {
                     let lineMap 
 
                     if(line_c=== undefined){
-                        lineMap=line_c.map;
-                    }else{
-                        res.status(400).send({
+                         res.status(400).send({
                         massage:"line not found."
                         });
+                    }else{
+                        lineMap=line_c.map;
                     }
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                         bus.active=false;
