@@ -428,7 +428,16 @@ module.exports.post_location = (req, res) => {
                     bus.time = Math.round(new Date().getTime() / 1000);
                     bus.angle=angle;
                     database.updateBusInfo(bus);
-                    let lineMap = database.lines.find(x => x.name == bus.line).map
+                    let line_c=database.lines.find(x => x.name == bus.line)
+                    let lineMap 
+
+                    if(line_c=== undefined){
+                        lineMap=line_c.map;
+                    }else{
+                        res.status(400).send({
+                        massage:"line not found."
+                        });
+                    }
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                         bus.active=false;
                         database.updateBusInfo(bus);
