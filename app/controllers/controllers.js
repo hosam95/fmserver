@@ -427,17 +427,22 @@ module.exports.post_location = (req, res) => {
                     bus.loc.lat = q.latitude;
                     bus.time = Math.round(new Date().getTime() / 1000);
                     bus.angle=angle;
-                    database.updateBusInfo(bus);
-                    let line_c=database.lines.find(x => x.name == bus.line)
-                    let lineMap 
-
-                    if(line_c=== undefined){
-                         res.status(400).send({
-                        massage:"line not found."
-                        });
+                    let lineMap
+                    if(bus.line_index!==undefined){
+                        lineMap=database.lines.find(x => x.index == bus.line_index).map;
                     }else{
-                        lineMap=line_c.map;
+                        let line_c=database.lines.find(x => x.name == bus.line)
+                        if(line_c=== undefined){
+                            bus.line=database.lines[0].name;
+                            bus.line_index=database.lines[0].index;
+                            lineMap=database.lines[0].map;
+                        }else{
+                            lineMap=line_c.map;
+                            bus.line_index=line_c.index;
+                        }
                     }
+                    
+                    database.updateBusInfo(bus);
                     if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                         bus.active=false;
                         database.updateBusInfo(bus);
@@ -565,6 +570,7 @@ module.exports.add_or_update_bus = (req, res) => {
                     long: null
                 },
                 line: '',
+                line_index:0,
                 time: null
             }
 
@@ -588,6 +594,12 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.line = q.line;
                 bus_c.driver = q.driver;
                 bus_c.active = q.active == 'true';
+                for (let i=0;i<database.lines.length;i++){
+                    if(database.lines[i].name==q.line){
+                        bus_c.line_index=database.lines[i].index;
+                        break;
+                    }
+                }
 
                 if (!check.bus_is_new(imei, database.buses)) {
                     database.updateBusInfoWithImei(q.imei, bus_c);

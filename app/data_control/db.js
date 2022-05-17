@@ -16,6 +16,7 @@ const crypto = require('crypto');
  * @property {string} driver The driver name
  * @property {string} imei A bus identifier
  * @property {string} line The name of the line the bus in
+ * @property {Int32Array} line_index the index of the line the bus in
  * @property {{long: Number, lat: Number}} loc The current location of the bus
  */
 
