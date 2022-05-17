@@ -450,7 +450,7 @@ module.exports.post_location = (req, res) => {
                         bus.active=true;
                         database.updateBusInfo(bus);
                     }
-                    res.status(200).send(lineMap);
+                    res.status(200).send("Done");
                     break;
                 }
             }
