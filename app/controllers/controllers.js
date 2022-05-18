@@ -377,7 +377,7 @@ module.exports.get_map = (req, res) => {
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
-    if(req.params("line_index")===undefined){
+    if(req.param("line_index")===undefined){
         line = database.lines.find(x => q.name == x.name);
         if(line ===undefined){
             res.status(404).send('{"error": "Line not found"}');
