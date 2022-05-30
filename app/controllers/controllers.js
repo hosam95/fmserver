@@ -355,7 +355,7 @@ module.exports.get_buses = (req, res) => {
 
 module.exports.get_bus = (req, res) => {
     let q = req.params;
-    let bus = database.buses().find(x => q.imei == x.imei);
+    let bus = database.buses().get(q.imei);
     if (bus)
         res.status(200).send(bus);
     else
@@ -409,7 +409,7 @@ module.exports.post_location = (req, res) => {
             });
         }
 
-        if (!database.buses().hase(imei)) {
+        if (!database.buses().has(imei)) {
             test = false;
             res.status(404).send({
                 message: "bus not found!"
