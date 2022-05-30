@@ -24,7 +24,7 @@ module.exports.remove_enduser_location =(req,res) => {
     }
 
 
-    if (check.line_is_new(line,database.lines)){
+    if (check.line_is_new(line,check.map2list(database.lines))){
         res.status(404).send({
             message : "line not found"
         });
@@ -87,7 +87,7 @@ module.exports.add_enduser_location = (req, res) => {
     }
 
 
-    if (check.line_is_new(line, database.lines)) {
+    if (check.line_is_new(line, check.map2list(database.lines))) {
         test = false;
         res.status(404).send({
             message: "line not found"
@@ -154,13 +154,8 @@ module.exports.get_endusers_locations = (req, res) => {
             return;
         }
 
-        let line;
-        for (let i = 0; i < database.buses.length; i++) {
-            if (imei == database.buses[i].imei) {
-                line = database.buses[i].line;
-                break;
-            }
-        }
+        let line=database.buses.get(imei).line;
+        
 
         if (!line) {
             res.status(404).send({
@@ -378,18 +373,22 @@ module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
     if(req.param("line_index")===undefined){
-        line = database.lines.find(x => q.name == x.name);
+        line = check.get_line_by_name(database.lines,q.name);
         if(line ===undefined){
-            res.status(404).send('{"error": "Line not found"}');
+            res.status(404).send({error: "Line not found"});
+            return;
+        }
+        else{
+            res.status(200).send(line);
             return;
         }
     }
     
-    line = database.lines.find(x => q.line_index == x.index);
+    line = database.lines.get(q.line_index);
     if (line)
         res.status(200).send(line);
     else
-        res.status(404).send('{"error": "Line not found"}');
+        res.status(404).send({error: "Line not found"});
 }
 
 //..................................................................
@@ -409,7 +408,7 @@ module.exports.post_location = (req, res) => {
             });
         }
 
-        if (check.bus_is_new(imei, database.buses)) {
+        if (!database.buses.hase(imei)) {
             test = false;
             res.status(404).send({
                 message: "bus not found!"
@@ -425,58 +424,73 @@ module.exports.post_location = (req, res) => {
 
         if (test) {
             let bus;
-            for (let i = 0; i < database.buses.length; i++) {
-                if (imei == database.buses[i].imei) {
-                    bus = database.buses[i];
-                    let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-                    let angle = bus.angle;
-                    if(distance > 1e-10)
-                        angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-                    bus.loc.long = q.longitude;
-                    bus.loc.lat = q.latitude;
-                    bus.time = Math.round(new Date().getTime() / 1000);
-                    bus.angle=angle;
-                    let lineMap
-                    if(bus.line_index!==undefined){
-                        lineMap=database.lines.find(x => x.index == bus.line_index).map;
-                    }else{
-                        let line_c=database.lines.find(x => x.name == bus.line)
-                        if(line_c=== undefined){
-                            bus.line=database.lines[0].name;
-                            bus.line_index=database.lines[0].index;
-                            lineMap=database.lines[0].map;
-                        }else{
-                            lineMap=line_c.map;
-                            bus.line_index=line_c.index;
-                        }
-                    }
-                    
-                    database.updateBusInfo(bus);
-                    if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
-                        bus.active=false;
-                        database.updateBusInfo(bus);
-                        if (!this.outOfBoundsBuses.has(bus.imei)) {
-                            this.outOfBoundsBuses.add(bus.imei);
-                            database.addOutOfBoundsBus(bus);
-                        }
-                    }
-                    else {
-                        if(this.outOfBoundsBuses.has(bus.imei)){
-                            this.outOfBoundsBuses.delete(bus.imei);
-                            bus.active=true;
-                            database.updateBusInfo(bus);
-                        }
-                    }
-
-                    if(this.disconnected.has(bus.imei)){
-                        this.disconnected.delete(bus.imei);
-                        bus.active=true;
-                        database.updateBusInfo(bus);
-                    }
-                    res.status(200).send("Done");
-                    break;
+            bus = database.buses.get(imei);
+            let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
+            let angle = bus.angle;
+            if(distance > 1e-10)
+                angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
+            bus.loc.long = q.longitude;
+            bus.loc.lat = q.latitude;
+            bus.time = Math.round(new Date().getTime() / 1000);
+            bus.angle=angle;
+            let lineMap
+            if(bus.line_index!==undefined){
+                lineMap=database.lines.get(bus.line_index).map;
+            }else{
+                let line_c=check.get_line_by_name(database.lines,bus.line)
+                if(line_c=== undefined){
+                    bus.line=[...database.lines][0].name;
+                    bus.line_index=[...database.lines][0].index;
+                    lineMap=[...database.lines][0].map;
+                }else{
+                    lineMap=line_c.map;
+                    bus.line_index=line_c.index;
                 }
             }
+            
+            database.updateBusInfo(bus);
+            if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
+                //***************************************** */
+                let count=0;
+                let line_index;
+                let line_name;
+                database.lines.forEach((val,key)=>{
+                    if(check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), val.map)){
+                        count++;
+                        line_index=val.index;
+                        line_name=val.name;
+                    }
+                })
+
+                if(count==1){
+                    bus.line=line_name;
+                    bus.line_index=line_index;
+                    database.updateBusInfo(bus);
+                }
+                /***************************************** */
+                else{
+                    bus.active=false;
+                    database.updateBusInfo(bus);
+                    if (!this.outOfBoundsBuses.has(bus.imei)) {
+                        this.outOfBoundsBuses.add(bus.imei);
+                        database.addOutOfBoundsBus(bus);
+                    }
+                }
+            }
+            else {
+                if(this.outOfBoundsBuses.has(bus.imei)){
+                    this.outOfBoundsBuses.delete(bus.imei);
+                    bus.active=true;
+                    database.updateBusInfo(bus);
+                }
+            }
+
+            if(this.disconnected.has(bus.imei)){
+                this.disconnected.delete(bus.imei);
+                bus.active=true;
+                database.updateBusInfo(bus);
+            }
+            res.status(200).send("Done");
         }
     }, () => {
         res.status(401).send({
@@ -537,8 +551,8 @@ module.exports.add_or_update_line = (req, res) => {
                 // }
                 // indx++;
                 line_c.index = req.body.index;
-                if (!check.line_is_new(q.name, database.lines)) {
-                    database.updateLineInfoWithName(q.name, line_c);
+                if (!check.line_is_new(q.name, check.map2list(database.lines))) {
+                    database.updateLineInfo( line_c);
                 }
                 else {
                     database.addLine(line_c);
@@ -591,7 +605,7 @@ module.exports.add_or_update_bus = (req, res) => {
                 });
             }
 
-            if (!check.bus_check(imei, q.line, database.lines)) {
+            if (!check.bus_check(imei, q.line, check.map2list(database.lines))) {
                 test = false;
                 res.status(400).send({
                     message: "Content structure is not correct!"
@@ -603,14 +617,10 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.line = q.line;
                 bus_c.driver = q.driver;
                 bus_c.active = q.active == 'true';
-                for (let i=0;i<database.lines.length;i++){
-                    if(database.lines[i].name==q.line){
-                        bus_c.line_index=database.lines[i].index;
-                        break;
-                    }
-                }
+                bus_c.line_index=check.get_line_by_name(database.lines,q.line).index;
+                
 
-                if (!check.bus_is_new(imei, database.buses)) {
+                if (database.buses.has(imei)) {
                     database.updateBusInfoWithImei(q.imei, bus_c);
                 }
                 else {
@@ -677,30 +687,33 @@ module.exports.remove_line = (req, res) => {
                 });
             }
 
-            if (check.line_is_new(q.name, database.lines)) {
+            if (check.line_is_new(q.name, check.map2list(database.lines))) {
                 test = false;
                 res.status(403).send({
                     message: "Line does not exist!"
                 });
             }
 
-            if (check.buses_in_line(q.name, database.buses)) {
+            if (check.buses_in_line(q.name, check.map2list(database.buses))) {
                 test = false;
                 res.status(401).send({
                     message: "Remove or reassign the buses in the line first!"
                 });
             }
             if (test) {
-                for (let i = 0; i < database.lines.length; i++) {
-                    if (q.name == database.lines[i].name) {
-                        let line_c = database.lines[i];
-                        database.removeLine(line_c)
-                        res.status(200).send({
-                            message: "DONE."
-                        });
-                        break;
-                    }
+                let line_c;
+                if(!req.param("line_index")){
+                    line_c=check.get_line_by_name(database.lines,q.name);
                 }
+                else{
+                    line_c=database.lines.get(q.line_index);
+                }
+
+                database.removeLine(line_c)
+                res.status(200).send({
+                    message: "DONE."
+                });
+                database.lines.delete(line_c.index);
             }
         }
         else {
@@ -732,23 +745,19 @@ module.exports.remove_bus = (req, res) => {
                 });
             }
 
-            if (check.bus_is_new(q.imei, database.buses)) {
+            if (!database.buses.has(q.imei)) {
                 test = false;
                 res.status(403).send({
                     message: "Bus does not exist!"
                 });
             }
             if (test) {
-                for (let i = 0; i < database.buses.length; i++) {
-                    if (database.buses[i].imei == q.imei) {
-                        let bus_c = database.buses[i];
-                        database.removeBus(bus_c);
-                        res.status(200).send({
-                            message: "DONE."
-                        });
-                        break;
-                    }
-                }
+                let bus_c=database.buses.get(q.imei);
+                database.removeBus(bus_c);
+                res.status(200).send({
+                    message: "DONE."
+                });
+                database.buses.delete(q.imei);
             }
         }
         else {
@@ -773,13 +782,8 @@ module.exports.update_bus = (req, res) => {
             let imei = req.params.imei;
             let q = url.parse(req.url, true).query;
             let test = true;
-            let bus_c = {};
-            for (let i = 0; i < database.buses.length; i++) {
-                if (database.buses[i].imei == imei) {
-                    bus_c = database.buses[i];
-                    break;
-                }
-            }
+            let bus_c = database.buses.get(imei);
+            
 
             // Validate request
             if (!req.body) {
@@ -788,7 +792,7 @@ module.exports.update_bus = (req, res) => {
                     message: "Content can not be empty!"
                 });
             }
-            else if (check.bus_is_new(imei, database.buses)) {
+            else if (!database.buses.has(imei)) {
                 test = false;
                 res.status(403).send({
                     message: "Bus does not exist!"
@@ -810,7 +814,7 @@ module.exports.update_bus = (req, res) => {
                     }
                 }
                 if (q.line != '') {
-                    if (check.line_is_new(q.line, database.lines)) {
+                    if (check.line_is_new(q.line, check.map2list(database.lines))) {
                         test = false;
                         res.status(400).send({
                             message: "Line does not exist!"

@@ -27,8 +27,8 @@ const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
 
 class Database {
-  #lines = [];
-  #buses = [];
+  #lines = new Map();
+  #buses = new Map();
 
   /**
    * Gets the current lines
@@ -58,7 +58,10 @@ class Database {
       dbo.collection("lines").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
-        this.#lines = result;
+        for(let i=0;i<result.length;i++){
+          this.#lines.set(result[i].index,result[i]);
+        }
+        
         db.close();
       });
     });
@@ -70,7 +73,9 @@ class Database {
       dbo.collection("buses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
-        this.#buses = result;
+        for(let i=0;i<result.length;i++){
+          this.#buses.set(result[i].index,result[i]);
+        }
         db.close();
       });
     });
@@ -92,7 +97,7 @@ class Database {
         db.close();
       });
     });
-    this.#lines.push(line);
+    this.#lines.set(line.index,line);
   }
 
   /**
@@ -111,7 +116,7 @@ class Database {
         db.close();
       });
     });
-    this.#buses.push(bus);
+    this.#buses.set(bus.imei,bus);
   }
 
   /**
@@ -132,8 +137,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#lines.findIndex(x => x.name == line.name);
-    this.#lines[idx] = line;
+    this.#lines.set(line.index,line);
   }
 
   /**
@@ -141,6 +145,7 @@ class Database {
    * 
    * @param {string} name The Line name
    */
+  /**@todo:شوف هتعمل فيها ايه دي */
   updateLineInfoWithName(name, line) {
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
@@ -176,8 +181,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == bus.imei);
-    this.#buses[idx] = bus;
+    this.#buses.set(bus.imei,bus);
   }
 
   /**
@@ -195,11 +199,15 @@ class Database {
       dbo.collection("buses").updateOne(busQuery, newBus, function (err, res) {
         if (err) throw err;
 
+      });
+
+      dbo.collection("buses").findOne(busQuery, function (err, res) {
+        if (err) throw err;
+
+        this.#buses.set(res.imei,res);
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == imei);
-    this.#buses[idx] = { ...this.#buses[idx], ...bus };
   }
 
   /**
@@ -219,8 +227,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#lines.findIndex(x => x.name == line.name);
-    this.#lines.splice(idx, 1);
+    this.#lines.delete(line.index);
   }
 
   /**
@@ -240,8 +247,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == bus.imei);
-    this.#buses.splice(idx, 1);
+    this.#buses.delete(bus.imei);
   }
 
   /**

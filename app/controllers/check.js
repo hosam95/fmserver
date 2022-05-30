@@ -339,8 +339,7 @@ module.exports.in_line = (lat, long, map) => {
     var line = turf.lineString(line_array);
     var distance = (turf.pointToLineDistance(pt, line, {units: 'kilometers'}))*1000;
     if(distance>max_distance){
-        /**@todo:change "true" to "false" */
-        return true;
+        return false;
     }
     return true;
 }
@@ -388,4 +387,21 @@ module.exports.ip_check=(ip,tree)=> {
     }
     else{return "a7a"}
     
+}
+
+module.exports. map2list=(map)=>{
+    let l=[];
+    map.forEach((val,key) => {
+        l.push(val);
+    });
+    return l;
+}
+
+module.exports. get_line_by_name=(map,name)=>{
+    map.forEach((val,key) => {
+        if(val.name==name){
+            return val;
+        }
+    });
+    return undefined;
 }
