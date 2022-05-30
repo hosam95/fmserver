@@ -472,8 +472,8 @@ module.exports.post_location = (req, res) => {
                 else{
                     bus.active=false;
                     database.updateBusInfo(bus);
-                    if (!this.outOfBoundsbuses.has(bus.imei)) {
-                        this.outOfBoundsbuses.add(bus.imei);
+                    if (!this.outOfBoundsBuses.has(bus.imei)) {
+                        this.outOfBoundsBuses.add(bus.imei);
                         database.addOutOfBoundsBus(bus);
                     }
                 }
@@ -622,7 +622,7 @@ module.exports.add_or_update_bus = (req, res) => {
                 
 
                 if (database.buses().has(imei)) {
-                    database.updateBusInfoWithImei(q.imei, bus_c);
+                    database.updateBusInfo(q.imei, bus_c);
                 }
                 else {
                     database.addBus(bus_c);
@@ -659,7 +659,7 @@ module.exports.setActiveBus = (req, res) => {
 
         let active = q.active == 'true';
 
-        database.updateBusInfoWithImei(imei, {active: active});
+        database.updateBusInfo(imei, {active: active});
 
         res.status(200).send({
             message: "DONE."

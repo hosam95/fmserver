@@ -32,17 +32,17 @@ app.listen(config.get('app.port'), () => {
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
-  for (let i = 0; i < database.buses.length; i++) {
-    if (database.buses[i].time == null) {
+  database.buses().forEach((val,key)=> {
+    if (val.time == null) {
     }
-    else if (database.buses[i].time < time - 5) {
+    else if (val.time < time - 5) {
       //send an alert.
-      let bus=database.buses[i];
+      let bus=val;
       bus.active=false;
       database.updateBusInfo(bus);
-      cn.disconnected.add(database.buses[i].imei);
+      cn.disconnected.add(val.imei);
     }
-  }
+  });
 }, 6000);
 
 //clear bad ips
