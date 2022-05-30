@@ -36,7 +36,7 @@ class Database {
    * @returns {Line[]}
    *  The current lines
    */
-  get lines() {
+  lines() {
     return this.#lines;
   }
 
@@ -46,7 +46,7 @@ class Database {
    * @returns {Bus[]}
    *  The current buses
    */
-  get buses() {
+  buses() {
     return this.#buses;
   }
 
