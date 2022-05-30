@@ -657,9 +657,10 @@ module.exports.setActiveBus = (req, res) => {
         let imei = req.params.imei;
         let q = url.parse(req.url, true).query;
 
-        let active = q.active == 'true';
+        let bus =database.buses().get(imei);
+        bus.active = q.active == 'true';
 
-        database.updateBusInfo({imei:imei, active: active});
+        database.updateBusInfo(bus);
 
         res.status(200).send({
             message: "DONE."
