@@ -24,7 +24,7 @@ module.exports.remove_enduser_location =(req,res) => {
     }
 
 
-    if (check.line_is_new(line,check.map2list(database.lines))){
+    if (check.line_is_new(line,check.map2list(database.lines()))){
         res.status(404).send({
             message : "line not found"
         });
@@ -87,7 +87,7 @@ module.exports.add_enduser_location = (req, res) => {
     }
 
 
-    if (check.line_is_new(line, check.map2list(database.lines))) {
+    if (check.line_is_new(line, check.map2list(database.lines()))) {
         test = false;
         res.status(404).send({
             message: "line not found"
@@ -154,7 +154,7 @@ module.exports.get_endusers_locations = (req, res) => {
             return;
         }
 
-        let line=database.buses.get(imei).line;
+        let line=database.buses().get(imei).line;
         
 
         if (!line) {
@@ -350,12 +350,12 @@ module.exports.delete_user = (req, res) => {
 
 // Send the buses data.
 module.exports.get_buses = (req, res) => {
-    res.status(200).send(database.buses);
+    res.status(200).send(check.map2list(database.buses()));
 }
 
 module.exports.get_bus = (req, res) => {
     let q = req.params;
-    let bus = database.buses.find(x => q.imei == x.imei);
+    let bus = database.buses().find(x => q.imei == x.imei);
     if (bus)
         res.status(200).send(bus);
     else
@@ -366,14 +366,14 @@ module.exports.get_bus = (req, res) => {
 
 // Send the map data.
 module.exports.get_map = (req, res) => {
-    res.status(200).send(database.lines);
+    res.status(200).send(check.map2list(database.lines()));
 }
 
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
     if(!req.param("line_index")){
-        line = database.lines.find(x => q.name == x.name);
+        line = database.lines().find(x => q.name == x.name);
         if(!line){
             res.status(404).send({"error": "Line not found"});
             return;
@@ -384,7 +384,7 @@ module.exports.get_line = (req, res) => {
         }
     }
     else
-        line = database.lines.find(x => q.line_index == x.index);
+        line = database.lines().find(x => q.line_index == x.index);
     
     if (line)
         res.status(200).send(line);
@@ -409,7 +409,7 @@ module.exports.post_location = (req, res) => {
             });
         }
 
-        if (!database.buses.hase(imei)) {
+        if (!database.buses().hase(imei)) {
             test = false;
             res.status(404).send({
                 message: "bus not found!"
@@ -425,7 +425,7 @@ module.exports.post_location = (req, res) => {
 
         if (test) {
             let bus;
-            bus = database.buses.get(imei);
+            bus = database.buses().get(imei);
             let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
             let angle = bus.angle;
             if(distance > 1e-10)
@@ -436,13 +436,13 @@ module.exports.post_location = (req, res) => {
             bus.angle=angle;
             let lineMap
             if(bus.line_index!==undefined){
-                lineMap=database.lines.get(bus.line_index).map;
+                lineMap=database.lines().get(bus.line_index).map;
             }else{
-                let line_c=check.get_line_by_name(database.lines,bus.line)
+                let line_c=check.get_line_by_name(database.lines(),bus.line)
                 if(line_c=== undefined){
-                    bus.line=[...database.lines][0].name;
-                    bus.line_index=[...database.lines][0].index;
-                    lineMap=[...database.lines][0].map;
+                    bus.line=[...database.lines()][0].name;
+                    bus.line_index=[...database.lines()][0].index;
+                    lineMap=[...database.lines()][0].map;
                 }else{
                     lineMap=line_c.map;
                     bus.line_index=line_c.index;
@@ -455,7 +455,7 @@ module.exports.post_location = (req, res) => {
                 let count=0;
                 let line_index;
                 let line_name;
-                database.lines.forEach((val,key)=>{
+                database.lines().forEach((val,key)=>{
                     if(check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), val.map)){
                         count++;
                         line_index=val.index;
@@ -472,8 +472,8 @@ module.exports.post_location = (req, res) => {
                 else{
                     bus.active=false;
                     database.updateBusInfo(bus);
-                    if (!this.outOfBoundsBuses.has(bus.imei)) {
-                        this.outOfBoundsBuses.add(bus.imei);
+                    if (!this.outOfBoundsbuses.has(bus.imei)) {
+                        this.outOfBoundsbuses.add(bus.imei);
                         database.addOutOfBoundsBus(bus);
                     }
                 }
@@ -552,7 +552,7 @@ module.exports.add_or_update_line = (req, res) => {
                 // }
                 // indx++;
                 line_c.index = req.body.index;
-                if (!check.line_is_new(q.name, check.map2list(database.lines))) {
+                if (!check.line_is_new(q.name, check.map2list(database.lines()))) {
                     database.updateLineInfo( line_c);
                 }
                 else {
@@ -606,7 +606,7 @@ module.exports.add_or_update_bus = (req, res) => {
                 });
             }
 
-            if (!check.bus_check(imei, q.line, check.map2list(database.lines))) {
+            if (!check.bus_check(imei, q.line, check.map2list(database.lines()))) {
                 test = false;
                 res.status(400).send({
                     message: "Content structure is not correct!"
@@ -618,10 +618,10 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.line = q.line;
                 bus_c.driver = q.driver;
                 bus_c.active = q.active == 'true';
-                bus_c.line_index=check.get_line_by_name(database.lines,q.line).index;
+                bus_c.line_index=check.get_line_by_name(database.lines(),q.line).index;
                 
 
-                if (database.buses.has(imei)) {
+                if (database.buses().has(imei)) {
                     database.updateBusInfoWithImei(q.imei, bus_c);
                 }
                 else {
@@ -688,14 +688,14 @@ module.exports.remove_line = (req, res) => {
                 });
             }
 
-            if (check.line_is_new(q.name, check.map2list(database.lines))) {
+            if (check.line_is_new(q.name, check.map2list(database.lines()))) {
                 test = false;
                 res.status(403).send({
                     message: "Line does not exist!"
                 });
             }
 
-            if (check.buses_in_line(q.name, check.map2list(database.buses))) {
+            if (check.buses_in_line(q.name, check.map2list(database.buses()))) {
                 test = false;
                 res.status(401).send({
                     message: "Remove or reassign the buses in the line first!"
@@ -704,17 +704,17 @@ module.exports.remove_line = (req, res) => {
             if (test) {
                 let line_c;
                 if(!req.param("line_index")){
-                    line_c=check.get_line_by_name(database.lines,q.name);
+                    line_c=check.get_line_by_name(database.lines(),q.name);
                 }
                 else{
-                    line_c=database.lines.get(q.line_index);
+                    line_c=database.lines().get(q.line_index);
                 }
 
                 database.removeLine(line_c)
                 res.status(200).send({
                     message: "DONE."
                 });
-                database.lines.delete(line_c.index);
+                database.lines().delete(line_c.index);
             }
         }
         else {
@@ -746,19 +746,19 @@ module.exports.remove_bus = (req, res) => {
                 });
             }
 
-            if (!database.buses.has(q.imei)) {
+            if (!database.buses().has(q.imei)) {
                 test = false;
                 res.status(403).send({
                     message: "Bus does not exist!"
                 });
             }
             if (test) {
-                let bus_c=database.buses.get(q.imei);
+                let bus_c=database.buses().get(q.imei);
                 database.removeBus(bus_c);
                 res.status(200).send({
                     message: "DONE."
                 });
-                database.buses.delete(q.imei);
+                database.buses().delete(q.imei);
             }
         }
         else {
@@ -783,7 +783,7 @@ module.exports.update_bus = (req, res) => {
             let imei = req.params.imei;
             let q = url.parse(req.url, true).query;
             let test = true;
-            let bus_c = database.buses.get(imei);
+            let bus_c = database.buses().get(imei);
             
 
             // Validate request
@@ -793,7 +793,7 @@ module.exports.update_bus = (req, res) => {
                     message: "Content can not be empty!"
                 });
             }
-            else if (!database.buses.has(imei)) {
+            else if (!database.buses().has(imei)) {
                 test = false;
                 res.status(403).send({
                     message: "Bus does not exist!"
@@ -815,7 +815,7 @@ module.exports.update_bus = (req, res) => {
                     }
                 }
                 if (q.line != '') {
-                    if (check.line_is_new(q.line, check.map2list(database.lines))) {
+                    if (check.line_is_new(q.line, check.map2list(database.lines()))) {
                         test = false;
                         res.status(400).send({
                             message: "Line does not exist!"
