@@ -373,7 +373,7 @@ module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
     if(!req.param("line_index")){
-        line = database.lines().find(x => q.name == x.name);
+        line = check.get_line_by_name(database.lines(),q.name);
         if(!line){
             res.status(404).send({"error": "Line not found"});
             return;
@@ -384,7 +384,7 @@ module.exports.get_line = (req, res) => {
         }
     }
     else
-        line = database.lines().find(x => q.line_index == x.index);
+        line = database.lines().get(q.line_index);
     
     if (line)
         res.status(200).send(line);
