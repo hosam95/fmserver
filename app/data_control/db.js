@@ -74,7 +74,7 @@ class Database {
         if (err) throw err;
 
         for(let i=0;i<result.length;i++){
-          this.#buses.set(result[i].index,result[i]);
+          this.#buses.set(result[i].imei,result[i]);
         }
         db.close();
       });
