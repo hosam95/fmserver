@@ -359,7 +359,7 @@ module.exports.get_bus = (req, res) => {
     if (bus)
         res.status(200).send(bus);
     else
-        res.status(404).send('{"error": "Bus not found"}');
+        res.status(404).send({"error": "Bus not found"});
 }
 
 //..................................................................
@@ -372,23 +372,24 @@ module.exports.get_map = (req, res) => {
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
-    if(req.param("line_index")===undefined){
-        line = check.get_line_by_name(database.lines,q.name);
-        if(line ===undefined){
-            res.status(404).send({error: "Line not found"});
+    if(!req.param("line_index")){
+        line = database.lines.find(x => q.name == x.name);
+        if(!line){
+            res.status(404).send({"error": "Line not found"});
             return;
         }
         else{
             res.status(200).send(line);
-            return;
+
         }
     }
+    else
+        line = database.lines.find(x => q.line_index == x.index);
     
-    line = database.lines.get(q.line_index);
     if (line)
         res.status(200).send(line);
     else
-        res.status(404).send({error: "Line not found"});
+        res.status(404).send({"error": "Line not found"});
 }
 
 //..................................................................
