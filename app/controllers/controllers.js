@@ -659,7 +659,7 @@ module.exports.setActiveBus = (req, res) => {
 
         let active = q.active == 'true';
 
-        database.updateBusInfo(imei, {active: active});
+        database.updateBusInfo({imei:imei, active: active});
 
         res.status(200).send({
             message: "DONE."
