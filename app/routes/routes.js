@@ -1,4 +1,5 @@
 const data = require("../controllers/controllers.js");
+const tickets=require("../tickets/controllers");
 
 module.exports = app => {
 
@@ -76,16 +77,16 @@ module.exports = app => {
     //TICKETS APIs:-
 
     //driver:
-    app.post("/ticket/new",);
+    app.post("/ticket/new",tickets.new_ticket);
 
-    app.get("/ticket/score",);
+    app.get("/ticket/score",tickets.get_score);
 
     //admin:
-    app.get("/ticket/overview",);
+    app.get("/ticket/overview",tickets.get_overview);
 
-    app.post("",)
+    app.post("",tickets.finish_session);
 
-    app.get("/ticket/driver",)
+    app.get("/ticket/driver",tickets.get_driver_scope);
 
-    app.get("/ticket/driver/bus/price",)
+    app.get("/ticket/driver/bus/price",tickets.get_detailed_scope);
 };

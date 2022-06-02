@@ -513,6 +513,63 @@ class Database {
       });
     });
   }
+
+  addTicketIfNew(ticket){
+    let driver_id=ticket.d_id;
+    let day_id=driver_id + ticket.date.toString();
+    let session_num=0
+    while(dbo.collection("sessions").find({ id: day_id+session_num.toString(),finished:false }).count()!=0){
+      session_id++;
+    }
+    let session_id=day_id+session_num.toString();
+    let bus_id=session_id+ticket.b_id;
+    let price_id=bus_id+ticket.price.toString();
+    ticket.t_p_id=price_id;
+
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+
+      if(dbo.collection("tickets").find({ id: ticket.id }).count()==0){
+
+        dbo.collection("tickets").insertOne(ticket, function(err, res) {
+          if (err) throw err;
+        });
+
+        db.tdrivers.updateOne(
+          { id: driver_id },
+          { $inc: { total: ticket.price} }
+        )
+
+        db.tday.updateOne(
+          { id: day_id },
+          { $inc: { total: ticket.price} }
+        )
+
+        db.tsessions.updateOne(
+          { id: session_id },
+          { $inc: { total: ticket.price} }
+        )
+
+        db.tbuss.updateOne(
+          { id: bus_id },
+          { $inc: { total: ticket.price} }
+        )
+
+        db.tprices.updateOne(
+          { id: price_id },
+          { $inc: { count: 1} }
+        )
+
+      }else{
+        db.close();
+        return{state:false,error:"ticket is already saved"}
+      }
+      db.close();
+      return{state:true};
+    });
+  }
 }
 
 
