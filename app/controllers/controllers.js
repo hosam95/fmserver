@@ -383,13 +383,14 @@ module.exports.get_line = (req, res) => {
 
         }
     }
-    else
+    else{
         line = database.lines().get(q.line_index);
     
-    if (line)
-        res.status(200).send(line);
-    else
-        res.status(404).send({"error": "Line not found"});
+        if (line)
+            res.status(200).send(line);
+        else
+            res.status(404).send({"error": "Line not found"});
+    }
 }
 
 //..................................................................
