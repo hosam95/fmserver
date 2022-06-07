@@ -82,11 +82,11 @@ module.exports = app => {
     app.get("/ticket/score",tickets.get_score);
 
     //admin:
-    app.get("/ticket/overview",tickets.get_overview);
+    app.get("/ticket/data/overview",tickets.get_overview);
 
     app.post("",tickets.finish_session);
 
-    app.get("/ticket/driver",tickets.get_driver_scope);
+    app.get("/ticket/data/driver",tickets.get_driver_scope);
 
-    app.get("/ticket/driver/bus/price",tickets.get_detailed_scope);
+    app.get("/ticket/data/driver/day/bus/price",tickets.get_detailed_scope);
 };

@@ -8,7 +8,6 @@ module.exports.new_ticket =(req,res)=>{
         let tickets=req.body.tickets;
         let err_t=[];
         for (ticket in tickets){
-            /**@todo:create database.addTicketIfNew()*/
             let err=database.addTicketIfNew(ticket);
             if(!err.state){
                 err_t.push({t_id:ticket.id,error:err.error})
@@ -41,14 +40,18 @@ module.exports.get_score =(req,res)=>{
 module.exports.get_overview =(req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            
+            let only_active=req.body.only_active;
+
+            let drivers=database.get_tdrivers(only_active);
+
+            res.status(200).send(drivers);
+
         }
         else {
             res.status(401).send({
                 message: "Access Denied"
             });
         }
-        
     }, () => {
         res.status(401).send({
             message: "Access Denied"
@@ -59,7 +62,24 @@ module.exports.get_overview =(req,res)=>{
 module.exports.get_driver_scope =(req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
+            let date=req.body.date;
+            let day=database.get_tday_by_date(date);
+            if(!day.id){
+                res.status(200).send(day);
+                return;
+            }
             
+            let sessions=database.get_sessions_by_day_id(day.id);
+            for(let i=0;i<sessions.length;i++){
+                sessions[i].buss=database.get_buss_by_session_id(sessions[i].id);
+
+                for(let j=0;j<sessions[i].buss.length;j++){
+                    sessions[i].buss[j].prices=database.get_prices_by_bus_id(sessions[i].buss[j].id);
+                }
+            }
+
+            res.status(200).send({day:day,sessions:sessions});
+
         }
         else {
             res.status(401).send({
@@ -77,7 +97,11 @@ module.exports.get_driver_scope =(req,res)=>{
 module.exports.get_detailed_scope =(req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            
+            let t_price_id=req.body.t_price_id;
+            let tickets=[];
+            tickets=database.get_tickets_by_tprice_id(t_price_id);
+
+            res.status(200).send(tickets);
         }
         else {
             res.status(401).send({
@@ -95,7 +119,15 @@ module.exports.get_detailed_scope =(req,res)=>{
 module.exports.finish_session =(req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            
+
+            let t_d_id=req.body.t_d_id;
+            if(!database.has_drivr(t_d_id)){
+                res.status(404).send({message:"driver not found!"});
+                return;
+            }
+
+            let total=database.finish_session(t_d_id);
+            res.status(200).send({driver_total:total});
         }
         else {
             res.status(401).send({
@@ -115,22 +147,27 @@ module.exports.finish_session =(req,res)=>{
  * @typedef {Object} t_driver
  * @property {string} id driver id.
  * @property {Int32Array} total total price of tickets.
- * @property {Date} last_paycheck date of the last paycheck.
+ * @property {date} l_paycheck_date date of the last paycheck.
+ * @property {string} l_paycheck_time time of the last paycheck.
+ * @property {boolean} is_active false if the driver is no longer working
  */
 
 /**
  * @typedef {Object} t_day
  * @property {string} id the id of the date session.
  * @property {Date} date the date.
+ * @property {boolean} finished wither the day has unfinished sessions or not.
  * @property {Int32Array} total total price of tickets.
- * @property {string} t_dr_id the id of the driver.
+ * @property {Int32Array} sessions_count the number of olde sessions that driver has.
+ * @property {string} t_dr_id the id of the t_driver.
  */
 
 /**
- * @typedef {Object} session
+ * @typedef {Object} t_session
  * @property {string} id the id of the session.
  * @property {boolean} finished wither the session is finished or not.
  * @property {Int32Array} total total price of tickets.
+ * @property {string} t_dr_id the id of the t_driver.
  * @property {string} t_dy_id the id of the t_day.
  */
 
@@ -139,7 +176,7 @@ module.exports.finish_session =(req,res)=>{
  * @property {string} id the id of the t_bus.
  * @property {string} b_id the id of the bus.
  * @property {Int32Array} total total price of tickets.
- * @property {string} t_s_id the id of the session.
+ * @property {string} t_s_id the id of the t_session.
  */
 
 /**
