@@ -84,7 +84,7 @@ module.exports = app => {
     //admin:
     app.get("/ticket/data/overview",tickets.get_overview);
 
-    app.post("",tickets.finish_session);
+    app.post("/ticket/driver/session/finish",tickets.finish_session);
 
     app.get("/ticket/data/driver",tickets.get_driver_scope);
 
