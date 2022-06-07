@@ -398,10 +398,11 @@ module.exports. map2list=(map)=>{
 }
 
 module.exports. get_line_by_name=(map,name)=>{
+    let line=undefined;
     map.forEach((val,key) => {
-        if(val.name==name){
-            return val;
+        if(val.name.normalize()==name.normalize()){
+            line=val;
         }
     });
-    return undefined;
+    return line;
 }
