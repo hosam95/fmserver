@@ -622,7 +622,7 @@ module.exports.add_or_update_bus = (req, res) => {
                 
 
                 if (database.buses().has(imei)) {
-                    database.updateBusInfo(q.imei, bus_c);
+                    database.updateBusInfo( bus_c);
                 }
                 else {
                     database.addBus(bus_c);
