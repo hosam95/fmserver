@@ -618,7 +618,16 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.line = q.line;
                 bus_c.driver = q.driver;
                 bus_c.active = q.active == 'true';
-                bus_c.line_index=check.get_line_by_name(database.lines(),q.line).index;
+                let line=check.get_line_by_name(database.lines(),q.line);
+                if(!line){
+                    console.log(q.line)
+                    res.status(404).send({
+                        message: "Line not found!"
+                    });
+                    return
+                }
+
+                bus_c.line_index=line.index;
                 
 
                 if (database.buses().has(imei)) {

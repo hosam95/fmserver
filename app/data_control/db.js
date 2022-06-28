@@ -20,11 +20,48 @@ const crypto = require('crypto');
  * @property {{long: Number, lat: Number}} loc The current location of the bus
  */
 
+/**
+ * @typedef {Object} id_counter
+ * @property {string} obj the object you are setting a counter for.
+ * @property {Int32Array} last the last id you have assigned.
+ */
+
 const dbHost = config.get('db.host');
 const dbPort = config.get('db.port');
 const dbName = config.get('db.name');
 const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
+
+const get_date=()=>{
+  let ts = Date.now();
+
+  let date_ob = new Date(ts);
+  let date = date_ob.getDate();
+  let month = date_ob.getMonth() + 1;
+  let year = date_ob.getFullYear();
+
+  // prints date & time in YYYY-MM-DD format
+  return year.toString() + "-" + month.toString() + "-" + date.toString();
+}
+
+
+
+const get_time=()=>{
+  let ts = Date.now();
+  let date_ob = new Date(ts);
+
+  // current hours
+  let hours = date_ob.getHours();
+
+  // current minutes
+  let minutes = date_ob.getMinutes();
+
+  // current seconds
+  let seconds = date_ob.getSeconds();
+
+  return hours.toString()+":"+minutes.toString()+":"+seconds.toString();
+}
+
 
 class Database {
   #lines = new Map();
@@ -78,6 +115,144 @@ class Database {
         }
         db.close();
       });
+    });
+
+    // create collections if thay doesn't exist.
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "last_id_counter"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("last_id_counter");
+            });
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+
+              var dbo = db.db(dbName);
+              dbo.collection("last_id_counter").insertOne({ obj:"users",last:1010 }, function (err, res) {
+                if (err) throw err;
+              });
+              
+            });
+            
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tdrivers"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tdrivers");
+            });
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tdays"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tdays");
+            });
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tsessions"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tsessions");
+            });
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tbuss"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tbuss");
+            });
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tprices"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tprices");
+            });
+          }
+      });
+      db.close();
+    });
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tickets"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tickets");
+            });
+          }
+      });
+      db.close();
     });
   }
 
@@ -450,15 +625,45 @@ class Database {
           MongoClient.connect(dbUri, function (err, db) {
             if (err) throw err;
 
+            let new_id;
             var dbo = db.db(dbName);
-            dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
+            dbo.collection("last_id_counter").findOne({obj:"users"}, function (err, res) {
               if (err) throw err;
+              
+              new_id=res.last.toString();
+            });
 
+            MongoClient.connect(dbUri, function (err, db) {
+              if (err) throw err;
+    
+              var dbo = db.db(dbName);
+              dbo.collection("last_id_counter").updateOne({obj:"users"},{$inc: { last: 1}});
               db.close();
             });
+            MongoClient.connect(dbUri, function (err, db) {
+              if (err) throw err;
+    
+              var dbo = db.db(dbName);
+              dbo.collection("users").insertOne({ ...user, password: hashedPassword,id:new_id }, function (err, res) {
+                if (err) throw err;
+
+                MongoClient.connect(dbUri, function (err, db) {
+                  if (err) throw err;
+        
+                  var dbo = db.db(dbName);
+                  dbo.collection("tdrivers").insertOne({id:new_id,total:0,is_active:true,l_paycheck_date:get_date(),l_paycheck_time:get_time()}, function (err, res) {
+                    if (err) throw err;
+                  });
+                  db.close();
+                });
+                
+              });
+              db.close();
+            });
+            
+            db.close();
           });
         }
-
         else {
           MongoClient.connect(dbUri, function (err, db) {
             if (err) throw err;
@@ -514,64 +719,145 @@ class Database {
     });
   }
 
-  addTicketIfNew(ticket){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
+  async check_ticket_tree(price_id,price,bus_id,b_id,session_id,t_dy_id,t_dr_id){
 
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    let price_c
+    // check if price exists.
+    price_c=await dbo.collection("tprices").countDocuments({ id: price_id })
+    
+    if(price_c){
+      db.close();
+      return
+    }
+
+    // create price.
+    let price_demo={
+      id:price_id,
+      price:price,
+      count:0,
+      t_b_id:bus_id
+    }
+    dbo.collection("tprices").insertOne(price_demo)
+
+    let bus_c
+    // check if bus exists.
+    bus_c=await dbo.collection("tbuss").countDocuments({ id: bus_id })
+      
+    if(bus_c){
+      db.close();
+      return
+    }
+    // create bus.
+    let bus_demo={
+      id:bus_id,
+      b_id:b_id,
+      total:0,
+      t_s_id:session_id
+    }
+    dbo.collection("tbuss").insertOne(bus_demo)
+
+    let session_c
+    // check if session exists.
+    session_c=await dbo.collection("tsessions").countDocuments({ id: session_id })
+
+    if(session_c){
+      db.close();
+      return
+    }
+    // create session.
+    let session_demo={
+      id:session_id,
+      finished:false,
+      total:0,
+      t_dr_id:t_dr_id,
+      t_dy_id:t_dy_id
+    }
+    dbo.collection("tsessions").insertOne(session_demo)
+    db.close();
+  }
+
+  async addTicketsIfNew(tickets){
+    let errors=[];
+    for (let i=0;i<tickets.length;i++ ){
+      let ticket=tickets[i]
+      const db=await MongoClient.connect(dbUri)
       var dbo = db.db(dbName);
 
       let driver_id=ticket.d_id;
       let day_id=driver_id + ticket.date.toString();
+      let day=null;
+      day=  await dbo.collection("tdays").findOne({ id: day_id })
+      
+      if(!day){
+        day={
+          id:day_id,
+          date:ticket.date.toString(),
+          finished:false,
+          total:0,
+          sessions_count:0,
+          t_dr_id:driver_id
+        }
+        
+        dbo.collection("tdays").insertOne(day)
+      }
 
-      let day=dbo.collection("tdays").findOne({ id: day_id })
-      let session_id=day_id+day.session_count.toString();
+      let session_id=day_id+day.sessions_count.toString();
 
       let bus_id=session_id+ticket.b_id;
       let price_id=bus_id+ticket.price.toString();
       ticket.t_p_id=price_id;
+      let re_ticket
+      
+      re_ticket= await dbo.collection("tickets").countDocuments({ id: ticket.id })
 
+      if(re_ticket<1){
 
-      if(dbo.collection("tickets").find({ id: ticket.id }).count()==0){
+        this.check_ticket_tree(price_id,ticket.price,bus_id,ticket.b_id,session_id,day_id,driver_id);
 
-        dbo.collection("tickets").insertOne(ticket, function(err, res) {
+        await dbo.collection("tickets").insertOne(ticket, function(err, res) {
           if (err) throw err;
         });
 
-        db.tdrivers.updateOne(
+        /*dbo.collection("tdrivers").updateOne(
           { id: driver_id },
           { $inc: { total: ticket.price} }
         )
 
-        db.tsessions.updateOne(
+        dbo.collection("tsessions").updateOne(
           { id: session_id },
           { $inc: { total: ticket.price} }
         )
 
-        db.tdays.updateOne(
+        dbo.collection("tdays").updateOne(
           { id: day_id },
           { $inc: { total: ticket.price} }
         )
-
-        db.tbuss.updateOne(
+        dbo.collection("tbuss").updateOne(
           { id: bus_id },
           { $inc: { total: ticket.price} }
-        )
+        )*/
 
-        db.tprices.updateOne(
+        await dbo.collection("tprices").updateOne(
           { id: price_id },
           { $inc: { count: 1} }
         )
 
-      }else{
         db.close();
-        return{state:false,error:"ticket is already saved"}
+
+      }else{
+        errors.push({t_id:ticket.id,error:"ticket is already saved"})
       }
-      db.close();
-      return{state:true};
-    });
+      if(i+1==tickets.length){
+        return errors;
+      }
+    }
+    
   }
 
-  get_tdrivers(only_active){
+  get_tdrivers(only_active,callback){
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
@@ -583,20 +869,20 @@ class Database {
       dbo.collection("tdrivers").find(query).toArray((err, result) => {
         if (err) throw err;
 
+        callback(result)
         db.close();
-        return result;
       });
     });
   }
 
-  get_tday_by_date(date){
+  get_tday_by_date(date,driver_id){
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      let query={date:date}
+      let query={date:date ,t_dr_id:driver_id}
       if(date==null){
-        query={finished:false}
+        query={finished:false,t_dr_id:driver_id}
       }
       dbo.collection("tdays").find(query).toArray((err, result) => {
         if (err) throw err;
@@ -668,7 +954,7 @@ class Database {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      if(dbo.collection("tdrivers").find({ id: d_id }).count()==0){
+      if(dbo.collection("tdrivers").countDocuments({ id: d_id })==0){
         db.close();
         return false;
       }
@@ -694,7 +980,7 @@ class Database {
           date:date,
           finished:false,
           total:0,
-          session_count:0,
+          sessions_count:0,
           t_dr_id:dr_id
         }
         dbo.tdays.insertOne(day, function(err, res) {
@@ -708,7 +994,7 @@ class Database {
         sessions=res;
       })
       dbo.tsessions.insertOne({
-        id:dy_id+day.session_count.toString(),
+        id:dy_id+day.sessions_count.toString(),
         finished:false,
         total:0,
         t_dr_id:dr_id,
@@ -766,34 +1052,4 @@ class Singleton {
 
 module.exports.Database = Singleton;
 
-
-module.exports. get_date=()=>{
-  let ts = Date.now();
-
-  let date_ob = new Date(ts);
-  let date = date_ob.getDate();
-  let month = date_ob.getMonth() + 1;
-  let year = date_ob.getFullYear();
-
-  // prints date & time in YYYY-MM-DD format
-  return year.toString() + "-" + month.toString() + "-" + date.toString();
-}
-
-
-
-module.exports. get_time=()=>{
-  let ts = Date.now();
-  let date_ob = new Date(ts);
-
-  // current hours
-  let hours = date_ob.getHours();
-
-  // current minutes
-  let minutes = date_ob.getMinutes();
-
-  // current seconds
-  let seconds = date_ob.getSeconds();
-
-  return hours.toString()+":"+minutes.toString()+":"+seconds.toString();
-}
 

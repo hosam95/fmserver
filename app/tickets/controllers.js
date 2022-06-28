@@ -3,20 +3,15 @@ const url = require('url');
 
 let database = db.getInstance();
 
-module.exports.new_ticket =(req,res)=>{
-    database.checkToken(req.header("token"), (result) => {
+module.exports.new_ticket = (req,res)=>{
+    database.checkToken(req.header("token"),async (result) => {
         let tickets=req.body.tickets;
-        let err_t=[];
-        for (ticket in tickets){
-            let err=database.addTicketIfNew(ticket);
-            if(!err.state){
-                err_t.push({t_id:ticket.id,error:err.error})
-            }
-        }
-        if(err_t.length>0){
-            res.state(400).send(err_t);
+        let errors= await database.addTicketsIfNew(tickets)
+        
+        if(errors.length>0){
+            res.status(400).send(err_t);
         }else{
-            res.state(200).send({message:"done"})
+            res.status(200).send({message:"done"})
         }
         
     }, () => {
@@ -37,14 +32,15 @@ module.exports.get_score =(req,res)=>{
     });
 }
 
-module.exports.get_overview =(req,res)=>{
+module.exports.get_overview = (req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            let only_active=req.body.only_active;
+            let q=url.parse(req.url, true).query
+            let only_active=q.only_active;
 
-            let drivers=database.get_tdrivers(only_active);
-
-            res.status(200).send(drivers);
+            database.get_tdrivers(only_active,(data)=>{
+                res.status(200).send(data);
+            });            
 
         }
         else {
@@ -62,10 +58,12 @@ module.exports.get_overview =(req,res)=>{
 module.exports.get_driver_scope =(req,res)=>{
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            let date=req.body.date;
-            let day=database.get_tday_by_date(date);
+            let q=url.parse(req.url, true).query
+            let date=q.date;
+            let drivre_id=q.driver_id
+            let day=database.get_tday_by_date(date,drivre_id);
             if(!day.id){
-                res.status(200).send(day);
+                res.status(200).send({day:day});
                 return;
             }
             
@@ -158,7 +156,7 @@ module.exports.finish_session =(req,res)=>{
  * @property {Date} date the date.
  * @property {boolean} finished wither the day has unfinished sessions or not.
  * @property {Int32Array} total total price of tickets.
- * @property {Int32Array} sessions_count the number of olde sessions that driver has.
+ * @property {Int32Array} sessions_count the number of olde sessions that day has.
  * @property {string} t_dr_id the id of the t_driver.
  */
 
