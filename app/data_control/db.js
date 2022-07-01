@@ -123,124 +123,6 @@ class Database {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      dbo.listCollections({name: "last_id_counter"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("last_id_counter");
-            });
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-
-              var dbo = db.db(dbName);
-              dbo.collection("last_id_counter").insertOne({ obj:"users",last:1010 }, function (err, res) {
-                if (err) throw err;
-              });
-              
-            });
-            
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.listCollections({name: "tdrivers"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("tdrivers");
-            });
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.listCollections({name: "tdays"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("tdays");
-            });
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.listCollections({name: "tsessions"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("tsessions");
-            });
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.listCollections({name: "tbuss"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("tbuss");
-            });
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.listCollections({name: "tprices"})
-        .next(function(err, collinfo) {
-          if (!collinfo) {
-            MongoClient.connect(dbUri, (err, db) => {
-              if (err) throw err;
-              
-              var dbo = db.db(dbName);
-              dbo.createCollection("tprices");
-            });
-          }
-      });
-      db.close();
-    });
-
-    MongoClient.connect(dbUri, function (err, db) {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
       dbo.listCollections({name: "tickets"})
         .next(function(err, collinfo) {
           if (!collinfo) {
@@ -625,26 +507,11 @@ class Database {
           MongoClient.connect(dbUri, function (err, db) {
             if (err) throw err;
 
-            let new_id;
-            var dbo = db.db(dbName);
-            dbo.collection("last_id_counter").findOne({obj:"users"}, function (err, res) {
-              if (err) throw err;
-              
-              new_id=res.last.toString();
-            });
-
             MongoClient.connect(dbUri, function (err, db) {
               if (err) throw err;
     
               var dbo = db.db(dbName);
-              dbo.collection("last_id_counter").updateOne({obj:"users"},{$inc: { last: 1}});
-              db.close();
-            });
-            MongoClient.connect(dbUri, function (err, db) {
-              if (err) throw err;
-    
-              var dbo = db.db(dbName);
-              dbo.collection("users").insertOne({ ...user, password: hashedPassword,id:new_id }, function (err, res) {
+              dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
                 if (err) throw err;
 
                 MongoClient.connect(dbUri, function (err, db) {
@@ -719,315 +586,79 @@ class Database {
     });
   }
 
-  async check_ticket_tree(price_id,price,bus_id,b_id,session_id,t_dy_id,t_dr_id){
-
-    const db=await MongoClient.connect(dbUri)
-    var dbo = db.db(dbName);
-
-    let price_c
-    // check if price exists.
-    price_c=await dbo.collection("tprices").countDocuments({ id: price_id })
-    
-    if(price_c){
-      db.close();
-      return
-    }
-
-    // create price.
-    let price_demo={
-      id:price_id,
-      price:price,
-      count:0,
-      t_b_id:bus_id
-    }
-    dbo.collection("tprices").insertOne(price_demo)
-
-    let bus_c
-    // check if bus exists.
-    bus_c=await dbo.collection("tbuss").countDocuments({ id: bus_id })
-      
-    if(bus_c){
-      db.close();
-      return
-    }
-    // create bus.
-    let bus_demo={
-      id:bus_id,
-      b_id:b_id,
-      total:0,
-      t_s_id:session_id
-    }
-    dbo.collection("tbuss").insertOne(bus_demo)
-
-    let session_c
-    // check if session exists.
-    session_c=await dbo.collection("tsessions").countDocuments({ id: session_id })
-
-    if(session_c){
-      db.close();
-      return
-    }
-    // create session.
-    let session_demo={
-      id:session_id,
-      finished:false,
-      total:0,
-      t_dr_id:t_dr_id,
-      t_dy_id:t_dy_id
-    }
-    dbo.collection("tsessions").insertOne(session_demo)
-    db.close();
-  }
-
   async addTicketsIfNew(tickets){
-    let errors=[];
+    let new_ids=[];
     for (let i=0;i<tickets.length;i++ ){
       let ticket=tickets[i]
+      ticket.checked=false;
       const db=await MongoClient.connect(dbUri)
       var dbo = db.db(dbName);
-
-      let driver_id=ticket.d_id;
-      let day_id=driver_id + ticket.date.toString();
-      let day=null;
-      day=  await dbo.collection("tdays").findOne({ id: day_id })
       
-      if(!day){
-        day={
-          id:day_id,
-          date:ticket.date.toString(),
-          finished:false,
-          total:0,
-          sessions_count:0,
-          t_dr_id:driver_id
-        }
-        
-        dbo.collection("tdays").insertOne(day)
-      }
+      let ticket_count= await dbo.collection("tickets").countDocuments({ id: ticket.id })
 
-      let session_id=day_id+day.sessions_count.toString();
-
-      let bus_id=session_id+ticket.b_id;
-      let price_id=bus_id+ticket.price.toString();
-      ticket.t_p_id=price_id;
-      let re_ticket
-      
-      re_ticket= await dbo.collection("tickets").countDocuments({ id: ticket.id })
-
-      if(re_ticket<1){
-
-        this.check_ticket_tree(price_id,ticket.price,bus_id,ticket.b_id,session_id,day_id,driver_id);
-
+      if(ticket_count==0){
         await dbo.collection("tickets").insertOne(ticket, function(err, res) {
           if (err) throw err;
         });
-
-        /*dbo.collection("tdrivers").updateOne(
-          { id: driver_id },
-          { $inc: { total: ticket.price} }
-        )
-
-        dbo.collection("tsessions").updateOne(
-          { id: session_id },
-          { $inc: { total: ticket.price} }
-        )
-
-        dbo.collection("tdays").updateOne(
-          { id: day_id },
-          { $inc: { total: ticket.price} }
-        )
-        dbo.collection("tbuss").updateOne(
-          { id: bus_id },
-          { $inc: { total: ticket.price} }
-        )*/
-
-        await dbo.collection("tprices").updateOne(
-          { id: price_id },
-          { $inc: { count: 1} }
-        )
-
-        db.close();
-
-      }else{
-        errors.push({t_id:ticket.id,error:"ticket is already saved"})
+        new_ids.push(ticket.id)
       }
+
+      db.close();
+
       if(i+1==tickets.length){
-        return errors;
+        return new_ids;
       }
     }
     
   }
 
-  get_tdrivers(only_active,callback){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
+  async get_total(query){
 
-      var dbo = db.db(dbName);
-      let query={}
-      if(only_active){
-        query={is_active:true}
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:null,
+        total:{$sum:"$price"}
       }
-      dbo.collection("tdrivers").find(query).toArray((err, result) => {
-        if (err) throw err;
-
-        callback(result)
-        db.close();
-      });
-    });
+    }
+    ]).toArray()
+    
+    db.close();
+    return total;
   }
 
-  get_tday_by_date(date,driver_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
+  async get_tickets(query,page,limit){
 
-      var dbo = db.db(dbName);
-      let query={date:date ,t_dr_id:driver_id}
-      if(date==null){
-        query={finished:false,t_dr_id:driver_id}
-      }
-      dbo.collection("tdays").find(query).toArray((err, result) => {
-        if (err) throw err;
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").find(query)
+      .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
+      .limit( limit ).toArray()
 
-        db.close();
-        return result;
-      });
-    });
-  }
-  
-  get_sessions_by_day_id(day_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("tsession").find({t_dy_id:day_id}).toArray((err, result) => {
-        if (err) throw err;
-
-        db.close();
-        return result;
-      });
-    });
-  }
-
-  get_buss_by_session_id(session_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("tbuss").find({t_s_id:session_id}).toArray((err, result) => {
-        if (err) throw err;
-
-        db.close();
-        return result;
-      });
-    });
-  }
-
-  get_prices_by_bus_id(bus_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("tprices").find({t_b_id:bus_id}).toArray((err, result) => {
-        if (err) throw err;
-
-        db.close();
-        return result;
-      });
-    });
-  }
-
-  get_tickets_by_tprice_id(tprice_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("tickets").find({t_p_id:tprice_id}).toArray((err, result) => {
-        if (err) throw err;
-
-        db.close();
-        return result;
-      });
-    });
-  }
-
-  has_drivr(d_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      if(dbo.collection("tdrivers").countDocuments({ id: d_id })==0){
-        db.close();
-        return false;
-      }
-      db.close();
-      return true;     
-    });
+    db.close();
+    return total;
   }
 
 
-  finish_session(dr_id){
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
+  async driver_checkout(driver_id){
+   
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
 
-      var dbo = db.db(dbName);
+    
 
-      //create the new session first.
-      let date=this.get_date;
-      let dy_id=dr_id+date;
-      let day =dbo.tdays.findOne({id:dy_id})
-      if(day==null){
-        day={
-          id:dy_id,
-          date:date,
-          finished:false,
-          total:0,
-          sessions_count:0,
-          t_dr_id:dr_id
-        }
-        dbo.tdays.insertOne(day, function(err, res) {
-          if (err) throw err;
-        });
-      }
-      let sessions;
-      dbo.tsessions.find({finished:false,t_dr_id:dr_id}).toArray((err,res)=>{
-        if(err)throw err
-
-        sessions=res;
-      })
-      dbo.tsessions.insertOne({
-        id:dy_id+day.sessions_count.toString(),
-        finished:false,
-        total:0,
-        t_dr_id:dr_id,
-        t_dy_id:dy_id
-      })
-
-      //finish current sessions.
-      let sessions_ids=sessions.map((a)=>{return a.id})
-      dbo.tsessions.update({id:{$in:sessions_ids}},{$set:{finished:true}});
-
-      //finish all unfinished days exepte for the current day.
-      let days
-      dbo.tdays.find({finished:false,t_dr_id:dr_id}).toArray((err,res)=>{
-        if(err)throw err
-
-        days=res;
-      })
-      let days_ids=days.map((a)=>{if(a.id==day.id){return null};return a.id})
-      dbo.tdays.update({id:{$in:days_ids}},{$set:{finished:true}});
-
-      //get driver total.
-      let d_total
-      dbo.collection("tdrivers").findOne({id:dr_id}, function(err, res) {
-        if (err) throw err;
-
-        d_total=res.total;
-      });
-      //update driver.
-      dbo.tdrivers.update({id:dr_id},{$set:{total:0 , l_paycheck_date:date ,l_paycheck_time:this.get_time()}});
-
-      db.close();
-      return d_total;
+    
+    return await dbo.collection("tickets").update({driver_id:driver_id,checked:false},{$set:{checked:true}},(err,res)=>{
+      if (err) throw err
     });
+
+    
+    db.close();
   }
 
 }

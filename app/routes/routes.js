@@ -77,16 +77,16 @@ module.exports = app => {
     //TICKETS APIs:-
 
     //driver:
-    app.post("/ticket/new",tickets.new_ticket);
+    app.post("/ticket/new",tickets.add_ticket);
 
-    app.get("/ticket/score",tickets.get_score);
+    //app.get("/ticket/score",tickets.get_score);
 
     //admin:
-    app.get("/ticket/data/overview",tickets.get_overview);
+    app.get("/ticket/search",tickets.get_tickets);
+    app.get("/ticket/search/total",tickets.get_tickets_total);
 
-    app.post("/ticket/driver/session/finish",tickets.finish_session);
 
-    app.get("/ticket/data/driver",tickets.get_driver_scope);
+    app.post("/driver/checkout/:driver_id",tickets.driver_checkout);
 
-    app.get("/ticket/data/driver/day/bus/price",tickets.get_detailed_scope);
+    
 };
