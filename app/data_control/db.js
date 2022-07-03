@@ -26,6 +26,7 @@ const dbName = config.get('db.name');
 const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
 
+
 class Database {
   #lines = new Map();
   #buses = new Map();
@@ -79,6 +80,26 @@ class Database {
         db.close();
       });
     });
+
+    // create collections if thay doesn't exist.
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tickets"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tickets");
+            });
+          }
+      });
+      db.close();
+    });
   }
 
   /**
@@ -129,7 +150,7 @@ class Database {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      var lineQuery = { name: line.name };
+      var lineQuery = { index: line.index };
       var newLine = { $set: line };
       dbo.collection("lines").updateOne(lineQuery, newLine, function (err, res) {
         if (err) throw err;
@@ -485,6 +506,7 @@ class Database {
     });
   }
 
+
   removeUser(user) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
@@ -513,6 +535,79 @@ class Database {
       });
     });
   }
+
+  async addTicketsIfNew(tickets){
+    let new_ids=[];
+    for (let i=0;i<tickets.length;i++ ){
+      let ticket=tickets[i]
+      ticket.checked=false;
+      const db=await MongoClient.connect(dbUri)
+      var dbo = db.db(dbName);
+      
+      let ticket_count= await dbo.collection("tickets").countDocuments({ id: ticket.id })
+
+      if(ticket_count==0){
+        await dbo.collection("tickets").insertOne(ticket, function(err, res) {
+          if (err) throw err;
+        });
+        new_ids.push(ticket.id)
+      }
+
+      db.close();
+
+      if(i+1==tickets.length){
+        return new_ids;
+      }
+    }
+    
+  }
+
+  async get_total(query){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:null,
+        total:{$sum:"$price"}
+      }
+    }
+    ]).toArray()
+    
+    db.close();
+    return total;
+  }
+
+  async get_tickets(query,page,limit){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").find(query)
+      .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
+      .limit( limit ).toArray()
+
+    db.close();
+    return total;
+  }
+
+
+  async driver_checkout(driver_id){
+   
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    return await dbo.collection("tickets").updateMany({driver_id:driver_id,checked:false},{$set:{checked:true}},(err,res)=>{
+      if (err){
+        db.close();
+        throw err
+      } 
+      db.close();
+    });
+  }
 }
 
 
@@ -534,3 +629,5 @@ class Singleton {
 }
 
 module.exports.Database = Singleton;
+
+

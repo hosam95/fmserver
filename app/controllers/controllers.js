@@ -524,7 +524,8 @@ module.exports.add_or_update_line = (req, res) => {
                 name: '',
                 map: [],
                 index: null,
-                stops: []
+                stops: [],
+                prices:[]
             }
             // Validate request
             if (!req.body) {
@@ -534,7 +535,7 @@ module.exports.add_or_update_line = (req, res) => {
                 });
             }
 
-            if (!check.line_check(q.name, req.body.map, req.body.stops)) {
+            if (!check.line_check(q.name, req.body.map, req.body.stops,req.body.prices)) {
                 test = false;
                 res.status(400).send({
                     message: "Content structure is not correct!"
@@ -545,6 +546,7 @@ module.exports.add_or_update_line = (req, res) => {
                 line_c.name = req.body.name;
                 line_c.map = req.body.map;
                 line_c.stops = req.body.stops;
+                line_c.prices=req.body.prices;
                 // if (database.lines.length == 0) {
                 //     indx = 0;
                 // }
@@ -619,10 +621,21 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.line = q.line;
                 bus_c.driver = q.driver;
                 bus_c.active = q.active == 'true';
-                bus_c.line_index=check.get_line_by_name(database.lines(),q.line).index;
+                let line=check.get_line_by_name(database.lines(),q.line);
+                if(!line){
+                    console.log(q.line)
+                    res.status(404).send({
+                        message: "Line not found!"
+                    });
+                    return
+                }
+
+                bus_c.line_index=line.index;
                 
 
                 if (database.buses().has(imei)) {
+                    let bus=database.buses().get(imei)
+                    bus_c.loc=bus.loc;
                     database.updateBusInfo( bus_c);
                 }
                 else {
