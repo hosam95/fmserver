@@ -523,7 +523,8 @@ module.exports.add_or_update_line = (req, res) => {
                 name: '',
                 map: [],
                 index: null,
-                stops: []
+                stops: [],
+                prices:[]
             }
             // Validate request
             if (!req.body) {
@@ -533,7 +534,7 @@ module.exports.add_or_update_line = (req, res) => {
                 });
             }
 
-            if (!check.line_check(q.name, req.body.map, req.body.stops)) {
+            if (!check.line_check(q.name, req.body.map, req.body.stops,req.body.prices)) {
                 test = false;
                 res.status(400).send({
                     message: "Content structure is not correct!"
@@ -544,6 +545,7 @@ module.exports.add_or_update_line = (req, res) => {
                 line_c.name = req.body.name;
                 line_c.map = req.body.map;
                 line_c.stops = req.body.stops;
+                line_c.prices=req.body.prices;
                 // if (database.lines.length == 0) {
                 //     indx = 0;
                 // }

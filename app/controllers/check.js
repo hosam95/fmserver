@@ -248,7 +248,7 @@ module.exports. good_ips= new BinarySearchTree();
 module.exports. r_good_ips= new BinarySearchTree();
 
 
-module.exports.line_check = (name, map, stops) => {
+module.exports.line_check = (name, map, stops,prices) => {
     if (!name) {
         return false;
     }
@@ -271,6 +271,17 @@ module.exports.line_check = (name, map, stops) => {
             return false;
         }
     }
+    if(Array.isArray(prices)){
+        if(prices.length<1)return false;
+
+        for (let i = 0; i < prices.length; i++) {
+            if (!Number.isInteger(prices[i])) {
+                return false;
+            }
+        }
+    }
+    else return false
+    
     return true;
 }
 

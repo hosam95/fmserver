@@ -186,7 +186,7 @@ class Database {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      var lineQuery = { name: line.name };
+      var lineQuery = { index: line.index };
       var newLine = { $set: line };
       dbo.collection("lines").updateOne(lineQuery, newLine, function (err, res) {
         if (err) throw err;
