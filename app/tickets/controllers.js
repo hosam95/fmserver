@@ -1,5 +1,4 @@
 const db = require('../data_control/db.js').Database;
-const { ifError } = require('assert');
 const url = require('url');
 
 let database = db.getInstance();
@@ -133,65 +132,6 @@ module.exports.get_tickets = (req,res)=>{
     });
 }
 
-module.exports.get_driver_scope =(req,res)=>{
-    database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
-            let q=url.parse(req.url, true).query
-            let date=q.date;
-            let drivre_id=q.driver_id
-            let day=database.get_tday_by_date(date,drivre_id);
-            if(!day.id){
-                res.status(200).send({day:day});
-                return;
-            }
-            
-            let sessions=database.get_sessions_by_day_id(day.id);
-            for(let i=0;i<sessions.length;i++){
-                sessions[i].buss=database.get_buss_by_session_id(sessions[i].id);
-
-                for(let j=0;j<sessions[i].buss.length;j++){
-                    sessions[i].buss[j].prices=database.get_prices_by_bus_id(sessions[i].buss[j].id);
-                }
-            }
-
-            res.status(200).send({day:day,sessions:sessions});
-
-        }
-        else {
-            res.status(401).send({
-                message: "Access Denied"
-            });
-        }
-        
-    }, () => {
-        res.status(401).send({
-            message: "Access Denied"
-        });
-    });
-}
-
-module.exports.get_detailed_scope =(req,res)=>{
-    database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
-            let t_price_id=req.body.t_price_id;
-            let tickets=[];
-            tickets=database.get_tickets_by_tprice_id(t_price_id);
-
-            res.status(200).send(tickets);
-        }
-        else {
-            res.status(401).send({
-                message: "Access Denied"
-            });
-        }
-        
-    }, () => {
-        res.status(401).send({
-            message: "Access Denied"
-        });
-    });
-}
-
 module.exports.driver_checkout =(req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
         if (result.role === 'admin') {
@@ -218,10 +158,11 @@ module.exports.driver_checkout =(req,res)=>{
 /**
  * @typedef {Object} ticket
  * @property {string} id the id of the ticket.
- * @property {Int32Array} price the price of ticket.
- * @property {string} bus_imei the id of the bus.
- * @property {number} time_stamp the date and time.
  * @property {string} driver_id driver id.
+ * @property {string} bus_imei the id of the bus.
  * @property {Int32Array} line_index line id.
  * @property {string} pos the id of the pos machean.
+ * @property {Int32Array} price the price of ticket.
+ * @property {number} time_stamp the date and time.
+ * @property {Boolean} checked is the ticket checked or not.
  */

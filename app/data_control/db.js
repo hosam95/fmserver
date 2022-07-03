@@ -507,30 +507,15 @@ class Database {
           MongoClient.connect(dbUri, function (err, db) {
             if (err) throw err;
 
-            MongoClient.connect(dbUri, function (err, db) {
+            var dbo = db.db(dbName);
+            dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
               if (err) throw err;
-    
-              var dbo = db.db(dbName);
-              dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
-                if (err) throw err;
 
-                MongoClient.connect(dbUri, function (err, db) {
-                  if (err) throw err;
-        
-                  var dbo = db.db(dbName);
-                  dbo.collection("tdrivers").insertOne({id:new_id,total:0,is_active:true,l_paycheck_date:get_date(),l_paycheck_time:get_time()}, function (err, res) {
-                    if (err) throw err;
-                  });
-                  db.close();
-                });
-                
-              });
               db.close();
             });
-            
-            db.close();
           });
         }
+
         else {
           MongoClient.connect(dbUri, function (err, db) {
             if (err) throw err;
@@ -556,6 +541,7 @@ class Database {
       });
     });
   }
+
 
   removeUser(user) {
     MongoClient.connect(dbUri, (err, db) => {
@@ -649,18 +635,15 @@ class Database {
    
     const db=await MongoClient.connect(dbUri)
     var dbo = db.db(dbName);
-
     
-
-    
-    return await dbo.collection("tickets").update({driver_id:driver_id,checked:false},{$set:{checked:true}},(err,res)=>{
-      if (err) throw err
+    return await dbo.collection("tickets").updateMany({driver_id:driver_id,checked:false},{$set:{checked:true}},(err,res)=>{
+      if (err){
+        db.close();
+        throw err
+      } 
+      db.close();
     });
-
-    
-    db.close();
   }
-
 }
 
 
