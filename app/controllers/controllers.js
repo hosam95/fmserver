@@ -633,6 +633,8 @@ module.exports.add_or_update_bus = (req, res) => {
                 
 
                 if (database.buses().has(imei)) {
+                    let bus=database.buses().get(imei)
+                    bus_c.loc=bus.loc;
                     database.updateBusInfo(q.imei, bus_c);
                 }
                 else {
