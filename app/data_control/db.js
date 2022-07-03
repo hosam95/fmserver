@@ -20,47 +20,11 @@ const crypto = require('crypto');
  * @property {{long: Number, lat: Number}} loc The current location of the bus
  */
 
-/**
- * @typedef {Object} id_counter
- * @property {string} obj the object you are setting a counter for.
- * @property {Int32Array} last the last id you have assigned.
- */
-
 const dbHost = config.get('db.host');
 const dbPort = config.get('db.port');
 const dbName = config.get('db.name');
 const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
-
-const get_date=()=>{
-  let ts = Date.now();
-
-  let date_ob = new Date(ts);
-  let date = date_ob.getDate();
-  let month = date_ob.getMonth() + 1;
-  let year = date_ob.getFullYear();
-
-  // prints date & time in YYYY-MM-DD format
-  return year.toString() + "-" + month.toString() + "-" + date.toString();
-}
-
-
-
-const get_time=()=>{
-  let ts = Date.now();
-  let date_ob = new Date(ts);
-
-  // current hours
-  let hours = date_ob.getHours();
-
-  // current minutes
-  let minutes = date_ob.getMinutes();
-
-  // current seconds
-  let seconds = date_ob.getSeconds();
-
-  return hours.toString()+":"+minutes.toString()+":"+seconds.toString();
-}
 
 
 class Database {
