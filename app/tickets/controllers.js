@@ -5,7 +5,7 @@ let database = db.getInstance();
 
 module.exports.add_ticket = (req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
-        let tickets=req.body.tickets;
+        let tickets=req.body;
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
         res.status(200).send(added_tickets_ids);
