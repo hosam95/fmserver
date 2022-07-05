@@ -42,13 +42,13 @@ module.exports.get_tickets_total =(req,res)=>{
         if(q.checked){
             query.checked=(q.checked=="true")
         }if(q.start){
-            query.timestamp={ $gt:parsInt(q.start)}
+            query.timestamp={ $gte:parsInt(q.start)}
         }
         if(q.end){
-            query.timestamp={ $lt:parsInt(q.end)}
+            query.timestamp={ $lte:parsInt(q.end)}
         }
         if(q.end && q.start){
-            query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
+            query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
         }
         
         let total=await database.get_total(query);
@@ -99,13 +99,13 @@ module.exports.get_tickets = (req,res)=>{
             if(q.checked){
                 query.checked=(q.checked=="true")
             }if(q.start){
-                query.timestamp={ $gt:parsInt(q.start)}
+                query.timestamp={ $gte:parsInt(q.start)}
             }
             if(q.end){
-                query.timestamp={ $lt:parsInt(q.end)}
+                query.timestamp={ $lte:parsInt(q.end)}
             }
             if(q.end && q.start){
-                query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
+                query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
             }
             
             if(q.page){
