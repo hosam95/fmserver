@@ -261,7 +261,12 @@ module.exports.validate_token = (req, res) => {
 module.exports.get_users = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            database.getUsers((result) => {
+            let q = url.parse(req.url, true).query;
+            let query={}
+            if(q.role){
+                query.role=q.role
+            }
+            database.getUsers(query,(result) => {
                 res.status(200).send(result);
             });
         }

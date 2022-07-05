@@ -522,12 +522,12 @@ class Database {
     });
   }
 
-  getUsers(callback) {
+  getUsers(query,callback) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      dbo.collection("users").find({}, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
+      dbo.collection("users").find(query, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
         callback(result);
