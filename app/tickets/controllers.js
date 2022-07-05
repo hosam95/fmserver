@@ -42,10 +42,10 @@ module.exports.get_tickets_total =(req,res)=>{
         if(q.checked){
             query.checked=(q.checked=="true")
         }if(q.start){
-            query.timestamp={ $gt:q.start}
+            query.timestamp={ $gt:parsInt(q.start)}
         }
         if(q.end){
-            query.timestamp={ $lt:q.end}
+            query.timestamp={ $lt:parsInt(q.end)}
         }
         if(q.end && q.start){
             query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
@@ -77,7 +77,7 @@ module.exports.get_tickets = (req,res)=>{
             let q = url.parse(req.url, true).query;
             let query={};
             let page=0
-            let limit=0
+            let limit=50
             if(q.id){
                 query.id=q.id
             }
@@ -99,10 +99,10 @@ module.exports.get_tickets = (req,res)=>{
             if(q.checked){
                 query.checked=(q.checked=="true")
             }if(q.start){
-                query.timestamp={ $gt:q.start}
+                query.timestamp={ $gt:parsInt(q.start)}
             }
             if(q.end){
-                query.timestamp={ $lt:q.end}
+                query.timestamp={ $lt:parsInt(q.end)}
             }
             if(q.end && q.start){
                 query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
