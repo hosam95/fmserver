@@ -490,6 +490,10 @@ class Database {
               newValues.$set.password = hashedPassword;
             }
 
+            if (user.name) {
+              newValues.$set.name = user.name;
+            }
+
             if (user.role) {
               newValues.$set.role = user.role;
             }
