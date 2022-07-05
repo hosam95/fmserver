@@ -366,7 +366,7 @@ module.exports.get_bus = (req, res) => {
     else
         res.status(404).send({"error": "Bus not found"});
 }
-
+ 
 //..................................................................
 
 // Send the map data.
