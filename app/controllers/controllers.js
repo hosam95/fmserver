@@ -895,7 +895,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            getOutOfBoundsBuses((result) => {
+            database.getOutOfBoundsBuses((result) => {
                 res.status(200).send(result);
             })
         }

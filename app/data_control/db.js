@@ -306,6 +306,8 @@ class Database {
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
 
+      var dbo = db.db(dbName);
+
       dbo.collection("outOfBoundsBuses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
