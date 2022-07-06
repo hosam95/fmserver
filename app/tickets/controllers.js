@@ -115,10 +115,10 @@ module.exports.get_tickets = (req,res)=>{
             if(q.limit){
                 limit=parseInt(q.limit)
             }
-            let ticket=await database.get_tickets(query,page,limit);
+            let ticket_obj=await database.get_tickets(query,page,limit);
 
             
-            res.status(200).send(ticket)                
+            res.status(200).send(ticket_obj)                
 
         }
         else {

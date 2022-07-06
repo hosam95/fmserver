@@ -588,12 +588,14 @@ class Database {
     const db=await MongoClient.connect(dbUri)
     var dbo = db.db(dbName);
     
-    let total=await dbo.collection("tickets").find(query)
+    let tickets=await dbo.collection("tickets").find(query)
       .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
       .limit( limit ).toArray()
 
+    let count=await dbo.collection("tickets").countDocuments(query)
+
     db.close();
-    return total;
+    return {tickets:tickets,count:count};
   }
 
 
