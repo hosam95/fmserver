@@ -110,10 +110,10 @@ module.exports.get_tickets = (req,res)=>{
             }
             
             if(q.page){
-                page=q.page
+                page=parseInt(q.page)
             }
             if(q.limit){
-                limit=q.limit
+                limit=parseInt(q.limit)
             }
             let ticket=await database.get_tickets(query,page,limit);
 
