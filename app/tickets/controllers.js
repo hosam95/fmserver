@@ -12,12 +12,14 @@ module.exports.add_ticket = (req,res)=>{
             res.status(406).send({
                 message:"Type Error:the 'tickets' should be an array"
             });
+            return
         }
         //check the content of the tickets array.
         if(!check.check_tickets(tickets)){
             res.status(400).send({
                 message:"wrong ticket structure"
             })
+            return
         }
 
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
