@@ -1,11 +1,25 @@
 const db = require('../data_control/db.js').Database;
 const url = require('url');
-
+const check=require('./check')
 let database = db.getInstance();
 
 module.exports.add_ticket = (req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
         let tickets=req.body.tickets;
+        
+        //check the tpe of the tickets array.
+        if(!Array.isArray(tickets)){
+            res.status(406).send({
+                message:"Type Error:the 'tickets' should be an array"
+            });
+        }
+        //check the content of the tickets array.
+        if(!check.check_tickets(tickets)){
+            res.status(400).send({
+                message:"wrong ticket structure"
+            })
+        }
+
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
         res.status(200).send(added_tickets_ids);
