@@ -180,6 +180,6 @@ module.exports.driver_checkout =(req,res)=>{
  * @property {Int32Array} line_index line id.
  * @property {string} pos the id of the pos machean.
  * @property {Int32Array} price the price of ticket.
- * @property {number} time_stamp the date and time.
+ * @property {number} timestamp the date and time.
  * @property {Boolean} checked is the ticket checked or not.
  */

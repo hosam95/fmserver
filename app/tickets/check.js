@@ -13,7 +13,7 @@ module.exports. check_tickets=(tickets)=>{
         if(!tickets[i].price){
             return false;
         }
-        if(!tickets[i].time_stamp){
+        if(!tickets[i].timestamp){
             return false;
         }
         
