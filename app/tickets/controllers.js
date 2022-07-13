@@ -5,7 +5,7 @@ let database = db.getInstance();
 
 module.exports.add_ticket = (req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
-        let tickets=req.body.tickets;
+        let tickets=req.body;
         
         //check the tpe of the tickets array.
         if(!Array.isArray(tickets)){
