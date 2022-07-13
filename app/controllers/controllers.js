@@ -195,6 +195,13 @@ module.exports.log_in = (req, res) => {
         return;
     }
     
+    if(req.imei){
+        database.getUsers({username:req.username},(result)=>{
+            if(result){
+                database.updateBusInfo({imei:req.imei,driver:result.name})
+            }
+        })
+    }
     database.login(req.body.username, req.body.password, (token) => {
         res.status(200).send({
             token: token
@@ -717,7 +724,7 @@ module.exports.remove_line = (req, res) => {
 
             if (check.buses_in_line(q.name, check.map2list(database.buses()))) {
                 test = false;
-                res.status(401).send({
+                res.status(403).send({
                     message: "Remove or reassign the buses in the line first!"
                 });
             }
