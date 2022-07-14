@@ -1,6 +1,8 @@
 const db = require('../data_control/db.js').Database;
 const url = require('url');
+const { get_line_by_name } = require('../controllers/check.js');
 const check=require('./check')
+const G_check=require('../controllers/check');
 let database = db.getInstance();
 
 module.exports.add_ticket = (req,res)=>{
@@ -43,9 +45,15 @@ module.exports.get_tickets_total =(req,res)=>{
         if(q.driver_id){
             query.driver_id=q.driver_id
         }
+
         if(q.line_index){
             query.line_index=parseInt(q.line_index)
         }
+        else if(q.line_name){
+            let line=G_check.get_line_by_name(database.lines(),q.line_name)
+            query.line_index=line.index;
+        }
+
         if(q.bus_imei){
             query.bus_imei=q.bus_imei
         }
@@ -100,9 +108,15 @@ module.exports.get_tickets = (req,res)=>{
             if(q.driver_id){
                 query.driver_id=q.driver_id
             }
+
             if(q.line_index){
                 query.line_index=parseInt(q.line_index)
             }
+            else if(q.line_name){
+                let line=G_check.get_line_by_name(database.lines(),q.line_name)
+                query.line_index=line.index;
+            }
+
             if(q.bus_imei){
                 query.bus_imei=q.bus_imei
             }
@@ -133,7 +147,8 @@ module.exports.get_tickets = (req,res)=>{
             }
             let ticket_obj=await database.get_tickets(query,page,limit);
 
-            
+            let pretty_tickets=check.ticket_pretty(ticket_obj.tickets);
+            ticket_obj.tickets=pretty_tickets
             res.status(200).send(ticket_obj)                
 
         }
