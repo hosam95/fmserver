@@ -384,7 +384,7 @@ module.exports.get_map = (req, res) => {
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
-    if(!q.index){
+    if(!q.line_index){
         line = check.get_line_by_name(database.lines(),q.name);
         if(!line){
             res.status(404).send({"error": "Line not found"});
@@ -396,7 +396,7 @@ module.exports.get_line = (req, res) => {
         }
     }
     else{
-        line = database.lines().get(parseInt(q.index));
+        line = database.lines().get(parseInt(q.line_index));
     
         if (line)
             res.status(200).send(line);
@@ -806,12 +806,11 @@ module.exports.remove_bus = (req, res) => {
 // Assign bus data.
 module.exports.update_bus = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
+        let imei = req.params.imei;
+        let q = url.parse(req.url, true).query;
+        let bus_c = database.buses().get(imei);
         if (result.role === 'admin') {
-            let imei = req.params.imei;
-            let q = url.parse(req.url, true).query;
             let test = true;
-            let bus_c = database.buses().get(imei);
-            
 
             // Validate request
             if (!req.body) {
@@ -861,8 +860,46 @@ module.exports.update_bus = (req, res) => {
             }
         }
         else {
-            res.status(401).send({
-                message: "Access Denied"
+            //Driver
+            if(q.line_index){
+                let line=database.lines().get(parseInt(q.line_index))
+                if(!line){
+                    res.status(404).send({
+                        message: "Line not found"
+                    });
+                    return
+                }
+                bus_c.line=line.name;
+                bus_c.line_index=line.index
+                database.updateBusInfo(bus_c)
+                res.status(200).send({
+                    message: "DONE."
+                });
+                return
+            }
+
+            if (q.line != '' && q.line) {
+                let line = check.get_line_by_name(database.lines(),q.line)
+                if (!line) {
+                    test = false;
+                    res.status(404).send({
+                        message: "Line not found"
+                    });
+                    return
+                }
+                else {
+                    bus_c.line = q.line;
+                    bus_c.line_index=line.index
+                    database.updateBusInfo(bus_c)
+                    res.status(200).send({
+                        message: "DONE."
+                    });
+                    return
+                }
+            }
+
+            res.status(400).send({
+                message: "Missing Parameters"
             });
         }
     }, () => {

@@ -54,7 +54,7 @@ module.exports = app => {
     // Send the map data.
     app.get('/lines', data.get_map);
     app.get('/lines/:name', data.get_line);
-    app.get('/lines/index/:index', data.get_line);
+    app.get('/lines/index/:line_index', data.get_line);
 
     // Delete a line with line-name.
     app.delete("/line/:name", data.remove_line);
