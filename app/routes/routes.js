@@ -13,6 +13,7 @@ module.exports = app => {
 
     // get the endusers locations.
     app.get("/bus/:imei/users",data.get_endusers_locations);
+    app.get("/endusers/locations",data.get_all_endusers_locations)
 
     //Log In.
     app.post("/login", data.log_in);

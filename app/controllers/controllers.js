@@ -184,6 +184,35 @@ module.exports.get_endusers_locations = (req, res) => {
     });
 }
 
+module.exports.get_all_endusers_locations = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {            
+
+            let locations_list=[]
+            for (let i = 0; i < this.locations.length; i++) {
+                let obj={
+                    name:this.locations[i].name,
+                    users:this.locations[i].users.map((user) => {return {loc:user.loc , end:user.end}})
+                }
+                locations_list.push(obj);
+            }
+
+            res.status(200).send(locations_list)
+            return;
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+
 // Log In.
 module.exports.log_in = (req, res) => {
 
