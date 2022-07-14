@@ -190,7 +190,7 @@ module.exports.log_in = (req, res) => {
     // Validate request
     if (!req.body || !req.body.username || !req.body.password) {
         res.status(400).send({
-            message: "Content can not be empty!"
+            message: "Content can not be empty"
         });
         return;
     }
@@ -384,7 +384,7 @@ module.exports.get_map = (req, res) => {
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
-    if(!req.param("line_index")){
+    if(!q.index){
         line = check.get_line_by_name(database.lines(),q.name);
         if(!line){
             res.status(404).send({"error": "Line not found"});
@@ -396,7 +396,7 @@ module.exports.get_line = (req, res) => {
         }
     }
     else{
-        line = database.lines().get(q.line_index);
+        line = database.lines().get(parseInt(q.index));
     
         if (line)
             res.status(200).send(line);
@@ -711,21 +711,21 @@ module.exports.remove_line = (req, res) => {
             if (!req.body) {
                 test = false;
                 res.status(400).send({
-                    message: "Content can not be empty!"
+                    message: "Content can not be empty"
                 });
             }
 
             if (check.line_is_new(q.name, check.map2list(database.lines()))) {
                 test = false;
                 res.status(403).send({
-                    message: "Line does not exist!"
+                    message: "Line does not exist"
                 });
             }
 
             if (check.buses_in_line(q.name, check.map2list(database.buses()))) {
                 test = false;
                 res.status(403).send({
-                    message: "Remove or reassign the buses in the line first!"
+                    message: "Remove or reassign the buses in the line first"
                 });
             }
             if (test) {
