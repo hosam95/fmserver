@@ -467,31 +467,33 @@ module.exports.post_location = (req, res) => {
 
         if (test) {
             let bus;
+            let bus_c={loc:{}};
             bus = database.buses().get(imei);
+            bus_c.imei=bus.imei;
             let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
             let angle = bus.angle;
             if(distance > 1e-10)
                 angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-            bus.loc.long = q.longitude;
-            bus.loc.lat = q.latitude;
-            bus.time = Math.round(new Date().getTime() / 1000);
-            bus.angle=angle;
+            bus_c.loc.long = q.longitude;
+            bus_c.loc.lat = q.latitude;
+            bus_c.time = Math.round(new Date().getTime() / 1000);
+            bus_c.angle=angle;
+            let line_c
             let lineMap
             if(bus.line_index!==undefined){
-                lineMap=database.lines().get(bus.line_index).map;
+                line_c=database.lines().get(bus.line_index);
             }else{
-                let line_c=check.get_line_by_name(database.lines(),bus.line)
-                if(line_c=== undefined){
-                    bus.line=[...database.lines()][0].name;
-                    bus.line_index=[...database.lines()][0].index;
-                    lineMap=[...database.lines()][0].map;
-                }else{
-                    lineMap=line_c.map;
-                    bus.line_index=line_c.index;
-                }
+                line_c=check.get_line_by_name(database.lines(),bus.line)
             }
-            
-            database.updateBusInfo(bus);
+            if(line_c=== undefined){
+                bus_c.line=[...database.lines()][0][1].name;
+                bus_c.line_index=[...database.lines()][0][1].index;
+                lineMap=[...database.lines()][0][1].map;
+            }else{
+                lineMap=line_c.map;
+                bus_c.line=line_c.name;
+                bus_c.line_index=line_c.index;
+            }
             if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                 //***************************************** */
                 let count=0;
@@ -506,14 +508,12 @@ module.exports.post_location = (req, res) => {
                 })
 
                 if(count==1){
-                    bus.line=line_name;
-                    bus.line_index=line_index;
-                    database.updateBusInfo(bus);
+                    bus_c.line=line_name;
+                    bus_c.line_index=line_index;
                 }
                 /***************************************** */
                 else{
-                    bus.active=false;
-                    database.updateBusInfo(bus);
+                    bus_c.active=false;
                     if (!this.outOfBoundsBuses.has(bus.imei)) {
                         this.outOfBoundsBuses.add(bus.imei);
                         database.addOutOfBoundsBus(bus);
@@ -523,16 +523,15 @@ module.exports.post_location = (req, res) => {
             else {
                 if(this.outOfBoundsBuses.has(bus.imei)){
                     this.outOfBoundsBuses.delete(bus.imei);
-                    bus.active=true;
-                    database.updateBusInfo(bus);
+                    bus_c.active=true;
                 }
             }
 
             if(this.disconnected.has(bus.imei)){
                 this.disconnected.delete(bus.imei);
-                bus.active=true;
-                database.updateBusInfo(bus);
+                bus_c.active=true;
             }
+            database.updateBusInfo(bus_c);
             res.status(200).send("Done");
         }
     }, () => {
@@ -900,7 +899,7 @@ module.exports.update_bus = (req, res) => {
                 }
                 bus_c.line=line.name;
                 bus_c.line_index=line.index
-                database.updateBusInfo(bus_c)
+                database.updateBusInfo({imei:bus_c.imei,line:bus_c.line,line_index:bus_c.line_index})
                 res.status(200).send({
                     message: "DONE."
                 });
@@ -919,7 +918,7 @@ module.exports.update_bus = (req, res) => {
                 else {
                     bus_c.line = q.line;
                     bus_c.line_index=line.index
-                    database.updateBusInfo(bus_c)
+                    database.updateBusInfo({imei:bus_c.imei,line:bus_c.line,line_index:bus_c.line_index})
                     res.status(200).send({
                         message: "DONE."
                     });
