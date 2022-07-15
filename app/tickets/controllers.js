@@ -1,11 +1,30 @@
 const db = require('../data_control/db.js').Database;
 const url = require('url');
-
+const { get_line_by_name } = require('../controllers/check.js');
+const check=require('./check')
+const G_check=require('../controllers/check');
 let database = db.getInstance();
 
 module.exports.add_ticket = (req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
         let tickets=req.body;
+        
+        //check the type of the tickets array.
+        if(!Array.isArray(tickets)){
+            res.status(406).send({
+                message:"Type Error:the 'tickets' should be an array"
+            });
+            return
+        }
+        //check the content of the tickets array.
+        if(!check.check_tickets(tickets)){
+            res.status(400).send({
+                message:"wrong ticket structure"
+            })
+            return
+        }
+
+
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
         res.status(200).send(added_tickets_ids);
@@ -27,9 +46,15 @@ module.exports.get_tickets_total =(req,res)=>{
         if(q.driver_id){
             query.driver_id=q.driver_id
         }
+
         if(q.line_index){
             query.line_index=parseInt(q.line_index)
         }
+        else if(q.line_name){
+            let line=G_check.get_line_by_name(database.lines(),q.line_name)
+            query.line_index=line.index;
+        }
+
         if(q.bus_imei){
             query.bus_imei=q.bus_imei
         }
@@ -42,13 +67,13 @@ module.exports.get_tickets_total =(req,res)=>{
         if(q.checked){
             query.checked=(q.checked=="true")
         }if(q.start){
-            query.timestamp={ $gt:q.start}
+            query.timestamp={ $gte:parseInt(q.start)}
         }
         if(q.end){
-            query.timestamp={ $lt:q.end}
+            query.timestamp={ $lte:parseInt(q.end)}
         }
         if(q.end && q.start){
-            query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
+            query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
         }
         
         let total=await database.get_total(query);
@@ -77,16 +102,22 @@ module.exports.get_tickets = (req,res)=>{
             let q = url.parse(req.url, true).query;
             let query={};
             let page=0
-            let limit=0
+            let limit=50
             if(q.id){
                 query.id=q.id
             }
             if(q.driver_id){
                 query.driver_id=q.driver_id
             }
+
             if(q.line_index){
                 query.line_index=parseInt(q.line_index)
             }
+            else if(q.line_name){
+                let line=G_check.get_line_by_name(database.lines(),q.line_name)
+                query.line_index=line.index;
+            }
+
             if(q.bus_imei){
                 query.bus_imei=q.bus_imei
             }
@@ -98,26 +129,28 @@ module.exports.get_tickets = (req,res)=>{
             }
             if(q.checked){
                 query.checked=(q.checked=="true")
-            }if(q.start){
-                query.timestamp={ $gt:q.start}
+            }
+            if(q.start){
+                query.timestamp={ $gte:parseInt(q.start)}
             }
             if(q.end){
-                query.timestamp={ $lt:q.end}
+                query.timestamp={ $lte:parseInt(q.end)}
             }
             if(q.end && q.start){
-                query.timestamp={ $gt : parseInt(q.start), $lt : parseInt(q.end)}
+                query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
             }
             
             if(q.page){
-                page=q.page
+                page=parseInt(q.page)
             }
             if(q.limit){
-                limit=q.limit
+                limit=parseInt(q.limit)
             }
-            let ticket=await database.get_tickets(query,page,limit);
+            let ticket_obj=await database.get_tickets(query,page,limit);
 
-            
-            res.status(200).send(ticket)                
+            let pretty_tickets=check.ticket_pretty(ticket_obj.tickets);
+            ticket_obj.tickets=pretty_tickets
+            res.status(200).send(ticket_obj)                
 
         }
         else {
@@ -163,6 +196,6 @@ module.exports.driver_checkout =(req,res)=>{
  * @property {Int32Array} line_index line id.
  * @property {string} pos the id of the pos machean.
  * @property {Int32Array} price the price of ticket.
- * @property {number} time_stamp the date and time.
+ * @property {number} timestamp the date and time.
  * @property {Boolean} checked is the ticket checked or not.
  */

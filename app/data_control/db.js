@@ -202,7 +202,7 @@ class Database {
         db.close();
       });
     });
-    this.#buses.set(bus.imei,bus);
+    this.#buses.set(bus.imei,{ ...this.#buses.get(bus.imei), ...bus});
   }
 
   /**
@@ -305,6 +305,8 @@ class Database {
   getOutOfBoundsBuses(callback) {
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
+
+      var dbo = db.db(dbName);
 
       dbo.collection("outOfBoundsBuses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
@@ -526,12 +528,12 @@ class Database {
     });
   }
 
-  getUsers(callback) {
+  getUsers(query,callback) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      dbo.collection("users").find({}, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
+      dbo.collection("users").find(query, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
         callback(result);
@@ -590,12 +592,14 @@ class Database {
     const db=await MongoClient.connect(dbUri)
     var dbo = db.db(dbName);
     
-    let total=await dbo.collection("tickets").find(query)
+    let tickets=await dbo.collection("tickets").find(query)
       .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
       .limit( limit ).toArray()
 
+    let count=await dbo.collection("tickets").countDocuments(query)
+
     db.close();
-    return total;
+    return {tickets:tickets,count:count};
   }
 
 

@@ -13,6 +13,7 @@ module.exports = app => {
 
     // get the endusers locations.
     app.get("/bus/:imei/users",data.get_endusers_locations);
+    app.get("/endusers/locations",data.get_all_endusers_locations)
 
     //Log In.
     app.post("/login", data.log_in);
@@ -54,6 +55,7 @@ module.exports = app => {
     // Send the map data.
     app.get('/lines', data.get_map);
     app.get('/lines/:name', data.get_line);
+    app.get('/lines/index/:line_index', data.get_line);
 
     // Delete a line with line-name.
     app.delete("/line/:name", data.remove_line);

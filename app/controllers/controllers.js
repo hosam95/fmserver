@@ -184,17 +184,53 @@ module.exports.get_endusers_locations = (req, res) => {
     });
 }
 
+module.exports.get_all_endusers_locations = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin') {            
+
+            let locations_list=[]
+            for (let i = 0; i < this.locations.length; i++) {
+                let obj={
+                    name:this.locations[i].name,
+                    users:this.locations[i].users.map((user) => {return {loc:user.loc , end:user.end}})
+                }
+                locations_list.push(obj);
+            }
+
+            res.status(200).send(locations_list)
+            return;
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+
 // Log In.
 module.exports.log_in = (req, res) => {
 
     // Validate request
     if (!req.body || !req.body.username || !req.body.password) {
         res.status(400).send({
-            message: "Content can not be empty!"
+            message: "Content can not be empty"
         });
         return;
     }
     
+    if(req.imei){
+        database.getUsers({username:req.username},(result)=>{
+            if(result){
+                database.updateBusInfo({imei:req.imei,driver:result.name})
+            }
+        })
+    }
     database.login(req.body.username, req.body.password, (token) => {
         res.status(200).send({
             token: token
@@ -261,7 +297,12 @@ module.exports.validate_token = (req, res) => {
 module.exports.get_users = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            database.getUsers((result) => {
+            let q = url.parse(req.url, true).query;
+            let query={}
+            if(q.role){
+                query.role=q.role
+            }
+            database.getUsers(query,(result) => {
                 res.status(200).send(result);
             });
         }
@@ -361,7 +402,7 @@ module.exports.get_bus = (req, res) => {
     else
         res.status(404).send({"error": "Bus not found"});
 }
-
+ 
 //..................................................................
 
 // Send the map data.
@@ -372,7 +413,7 @@ module.exports.get_map = (req, res) => {
 module.exports.get_line = (req, res) => {
     let q = req.params;
     let line;
-    if(!req.param("line_index")){
+    if(!q.line_index){
         line = check.get_line_by_name(database.lines(),q.name);
         if(!line){
             res.status(404).send({"error": "Line not found"});
@@ -384,7 +425,7 @@ module.exports.get_line = (req, res) => {
         }
     }
     else{
-        line = database.lines().get(q.line_index);
+        line = database.lines().get(parseInt(q.line_index));
     
         if (line)
             res.status(200).send(line);
@@ -426,31 +467,33 @@ module.exports.post_location = (req, res) => {
 
         if (test) {
             let bus;
+            let bus_c={loc:{}};
             bus = database.buses().get(imei);
+            bus_c.imei=bus.imei;
             let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
             let angle = bus.angle;
             if(distance > 1e-10)
                 angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-            bus.loc.long = q.longitude;
-            bus.loc.lat = q.latitude;
-            bus.time = Math.round(new Date().getTime() / 1000);
-            bus.angle=angle;
+            bus_c.loc.long = q.longitude;
+            bus_c.loc.lat = q.latitude;
+            bus_c.time = Math.round(new Date().getTime() / 1000);
+            bus_c.angle=angle;
+            let line_c
             let lineMap
             if(bus.line_index!==undefined){
-                lineMap=database.lines().get(bus.line_index).map;
+                line_c=database.lines().get(bus.line_index);
             }else{
-                let line_c=check.get_line_by_name(database.lines(),bus.line)
-                if(line_c=== undefined){
-                    bus.line=[...database.lines()][0].name;
-                    bus.line_index=[...database.lines()][0].index;
-                    lineMap=[...database.lines()][0].map;
-                }else{
-                    lineMap=line_c.map;
-                    bus.line_index=line_c.index;
-                }
+                line_c=check.get_line_by_name(database.lines(),bus.line)
             }
-            
-            database.updateBusInfo(bus);
+            if(line_c=== undefined){
+                bus_c.line=[...database.lines()][0][1].name;
+                bus_c.line_index=[...database.lines()][0][1].index;
+                lineMap=[...database.lines()][0][1].map;
+            }else{
+                lineMap=line_c.map;
+                bus_c.line=line_c.name;
+                bus_c.line_index=line_c.index;
+            }
             if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
                 //***************************************** */
                 let count=0;
@@ -465,14 +508,12 @@ module.exports.post_location = (req, res) => {
                 })
 
                 if(count==1){
-                    bus.line=line_name;
-                    bus.line_index=line_index;
-                    database.updateBusInfo(bus);
+                    bus_c.line=line_name;
+                    bus_c.line_index=line_index;
                 }
                 /***************************************** */
                 else{
-                    bus.active=false;
-                    database.updateBusInfo(bus);
+                    bus_c.active=false;
                     if (!this.outOfBoundsBuses.has(bus.imei)) {
                         this.outOfBoundsBuses.add(bus.imei);
                         database.addOutOfBoundsBus(bus);
@@ -482,16 +523,15 @@ module.exports.post_location = (req, res) => {
             else {
                 if(this.outOfBoundsBuses.has(bus.imei)){
                     this.outOfBoundsBuses.delete(bus.imei);
-                    bus.active=true;
-                    database.updateBusInfo(bus);
+                    bus_c.active=true;
                 }
             }
 
             if(this.disconnected.has(bus.imei)){
                 this.disconnected.delete(bus.imei);
-                bus.active=true;
-                database.updateBusInfo(bus);
+                bus_c.active=true;
             }
+            database.updateBusInfo(bus_c);
             res.status(200).send("Done");
         }
     }, () => {
@@ -699,21 +739,21 @@ module.exports.remove_line = (req, res) => {
             if (!req.body) {
                 test = false;
                 res.status(400).send({
-                    message: "Content can not be empty!"
+                    message: "Content can not be empty"
                 });
             }
 
             if (check.line_is_new(q.name, check.map2list(database.lines()))) {
                 test = false;
                 res.status(403).send({
-                    message: "Line does not exist!"
+                    message: "Line does not exist"
                 });
             }
 
             if (check.buses_in_line(q.name, check.map2list(database.buses()))) {
                 test = false;
-                res.status(401).send({
-                    message: "Remove or reassign the buses in the line first!"
+                res.status(403).send({
+                    message: "Remove or reassign the buses in the line first"
                 });
             }
             if (test) {
@@ -794,12 +834,11 @@ module.exports.remove_bus = (req, res) => {
 // Assign bus data.
 module.exports.update_bus = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
+        let imei = req.params.imei;
+        let q = url.parse(req.url, true).query;
+        let bus_c = database.buses().get(imei);
         if (result.role === 'admin') {
-            let imei = req.params.imei;
-            let q = url.parse(req.url, true).query;
             let test = true;
-            let bus_c = database.buses().get(imei);
-            
 
             // Validate request
             if (!req.body) {
@@ -849,8 +888,46 @@ module.exports.update_bus = (req, res) => {
             }
         }
         else {
-            res.status(401).send({
-                message: "Access Denied"
+            //Driver
+            if(q.line_index){
+                let line=database.lines().get(parseInt(q.line_index))
+                if(!line){
+                    res.status(404).send({
+                        message: "Line not found"
+                    });
+                    return
+                }
+                bus_c.line=line.name;
+                bus_c.line_index=line.index
+                database.updateBusInfo({imei:bus_c.imei,line:bus_c.line,line_index:bus_c.line_index})
+                res.status(200).send({
+                    message: "DONE."
+                });
+                return
+            }
+
+            if (q.line != '' && q.line) {
+                let line = check.get_line_by_name(database.lines(),q.line)
+                if (!line) {
+                    test = false;
+                    res.status(404).send({
+                        message: "Line not found"
+                    });
+                    return
+                }
+                else {
+                    bus_c.line = q.line;
+                    bus_c.line_index=line.index
+                    database.updateBusInfo({imei:bus_c.imei,line:bus_c.line,line_index:bus_c.line_index})
+                    res.status(200).send({
+                        message: "DONE."
+                    });
+                    return
+                }
+            }
+
+            res.status(400).send({
+                message: "Missing Parameters"
             });
         }
     }, () => {
@@ -890,7 +967,7 @@ module.exports.out_of_bounds_history = (req, res) => {
 
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin') {
-            getOutOfBoundsBuses((result) => {
+            database.getOutOfBoundsBuses((result) => {
                 res.status(200).send(result);
             })
         }
