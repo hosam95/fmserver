@@ -190,8 +190,11 @@ module.exports.get_all_endusers_locations = (req, res) => {
 
             let locations_list=[]
             for (let i = 0; i < this.locations.length; i++) {
+                let line =check.get_line_by_name(batabase.lines(),this.locations[i].name)
                 let obj={
                     name:this.locations[i].name,
+                    start:line.stops[0].name,
+                    end:line.stops[-1].name,
                     users:this.locations[i].users.map((user) => {return {loc:user.loc , end:user.end}})
                 }
                 locations_list.push(obj);
