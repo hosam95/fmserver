@@ -201,8 +201,13 @@ class Database {
 
         db.close();
       });
+      dbo.collection("buses").find(busQuery, function (err, res) {
+        if (err) throw err;
+        this.#buses.set(bus.imei,res);
+        db.close();
+      });
     });
-    this.#buses.set(bus.imei,bus);
+    
   }
 
   /**
