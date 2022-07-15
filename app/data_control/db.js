@@ -202,7 +202,7 @@ class Database {
         db.close();
       });
     });
-    this.#buses.set(bus.imei,bus);
+    this.#buses.set(bus.imei,{ ...this.#buses.get(bus.imei), ...bus});
   }
 
   /**
