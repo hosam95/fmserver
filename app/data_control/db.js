@@ -201,13 +201,8 @@ class Database {
 
         db.close();
       });
-      dbo.collection("buses").find(busQuery, function (err, res) {
-        if (err) throw err;
-        this.#buses.set(bus.imei,res);
-        db.close();
-      });
     });
-    
+    this.#buses.set(bus.imei,{ ...this.#buses.get(bus.imei), ...bus});
   }
 
   /**
@@ -500,7 +495,7 @@ class Database {
             if (user.name) {
               newValues.$set.name = user.name;
             }
-            
+
             if (user.role) {
               newValues.$set.role = user.role;
             }
