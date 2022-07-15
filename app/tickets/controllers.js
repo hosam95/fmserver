@@ -9,7 +9,7 @@ module.exports.add_ticket = (req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
         let tickets=req.body;
         
-        //check the tpe of the tickets array.
+        //check the type of the tickets array.
         if(!Array.isArray(tickets)){
             res.status(406).send({
                 message:"Type Error:the 'tickets' should be an array"
@@ -23,6 +23,7 @@ module.exports.add_ticket = (req,res)=>{
             })
             return
         }
+
 
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
