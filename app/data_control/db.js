@@ -496,6 +496,10 @@ class Database {
               newValues.$set.name = user.name;
             }
 
+            if (user.phone_number) {
+              newValues.$set.phone_number = user.phone_number;
+            }
+
             if (user.role) {
               newValues.$set.role = user.role;
             }
