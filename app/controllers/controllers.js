@@ -234,9 +234,10 @@ module.exports.log_in = (req, res) => {
             }
         })
     }
-    database.login(req.body.username, req.body.password, (token) => {
+    database.login(req.body.username, req.body.password, (token,role) => {
         res.status(200).send({
-            token: token
+            token: token,
+            role:role
         })
     }, () => {
         res.status(401).send({
@@ -286,7 +287,8 @@ module.exports.validate_token = (req, res) => {
 
     database.checkToken(req.body.token, (user) => {
         res.status(200).send({
-            username: user.username
+            username: user.username,
+            role:user.role
         })
     }, () => {
         res.status(401).send({
@@ -299,7 +301,7 @@ module.exports.validate_token = (req, res) => {
 // Get all users
 module.exports.get_users = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin' || result.role==="accountant") {
             let q = url.parse(req.url, true).query;
             let query={}
             if(q.role){

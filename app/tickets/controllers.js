@@ -98,7 +98,7 @@ module.exports.get_tickets_total =(req,res)=>{
 
 module.exports.get_tickets = (req,res)=>{
     database.checkToken(req.header("token"), async (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin' || result.role ==="accountant") {
             let q = url.parse(req.url, true).query;
             let query={};
             let page=0
@@ -167,7 +167,7 @@ module.exports.get_tickets = (req,res)=>{
 
 module.exports.driver_checkout =(req,res)=>{
     database.checkToken(req.header("token"),async (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin' || result.role === "accountant") {
 
             let driver_id=req.params.driver_id;
 
