@@ -43,7 +43,7 @@ setInterval(() => {
       cn.disconnected.add(val.imei);
     }
   });
-}, 6000);
+}, 9000);
 
 //clear bad ips
 setInterval(()=>{
