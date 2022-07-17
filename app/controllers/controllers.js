@@ -299,7 +299,7 @@ module.exports.validate_token = (req, res) => {
 // Get all users
 module.exports.get_users = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin' || result.role==="accountant") {
             let q = url.parse(req.url, true).query;
             let query={}
             if(q.role){
