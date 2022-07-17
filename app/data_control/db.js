@@ -355,6 +355,7 @@ class Database {
           errorCallback();
         }
         else {
+          let role=result.role;
           MongoClient.connect(dbUri, (err, db) => {
             if (err) throw err;
 
@@ -371,7 +372,7 @@ class Database {
             dbo.collection("tokens").createIndex({ "createdAt": 1 }, { expireAfterSeconds: tokenExpiry * 60 });
             dbo.collection("tokens").insertOne(tokenEntry, (err, result) => {
               db.close();
-              callback(token);
+              callback(token,role);
             });
           });
         }
