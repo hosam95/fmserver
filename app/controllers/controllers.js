@@ -227,10 +227,10 @@ module.exports.log_in = (req, res) => {
         return;
     }
     
-    if(req.imei){
-        database.getUsers({username:req.username},(result)=>{
+    if(req.body.imei){
+        database.getUsers({username:req.body.username},(result)=>{
             if(result){
-                database.updateBusInfo({imei:req.imei,driver:result.name})
+                database.updateBusInfo({imei:req.body.imei,driver:result[0].name})
             }
         })
     }
