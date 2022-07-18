@@ -366,10 +366,10 @@ class Database {
             var tokenEntry = {
               token: token,
               userId: result._id,
-              createdAt: new Date()
+              creationTime: new Date()
             };
 
-            dbo.collection("tokens").createIndex({ "createdAt": 1 }, { expireAfterSeconds: tokenExpiry * 60 });
+            dbo.collection("tokens").createIndex({ "creationTime": 1 }, { expireAfterSeconds: tokenExpiry * 60 });
             dbo.collection("tokens").insertOne(tokenEntry, (err, result) => {
               db.close();
               callback(token,role);
