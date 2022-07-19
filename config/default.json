@@ -16,6 +16,6 @@
         "name": "fmdb"
     },
     "auth": {
-        "tokenExpiry": 120
+        "tokenExpiry": 1440
     }
 }
