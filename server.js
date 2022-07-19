@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 // User CORS
 var corsOptions = {
   origin: function (origin, callback) {
-    if (config.get('app.cors_origin').indexOf(origin) !== -1) {
+    if (config.get('app.cors_origin').indexOf(origin) !== -1 || !origin) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
