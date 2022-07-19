@@ -16,7 +16,13 @@ app.use(bodyParser.json());
 
 // User CORS
 var corsOptions = {
-  origin: config.get('app.cors_origin'),
+  origin: function (origin, callback) {
+    if (config.get('app.cors_origin').indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 app.use(cors(corsOptions))
