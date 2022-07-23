@@ -1,7 +1,14 @@
 {
     "app": {
         "port": 4000,
-        "cors_origin": "http://localhost:3000"
+        "cors_origin": [
+            "http://localhost:3000",
+            "https://localhost:3000",
+            "http://www.fmfortravels.com:3000",
+            "http://www.fmfortravels.com:3000",
+            "https://www.fmfortravels.com:3000",
+            "https://www.fmfortravels.com:3000"
+        ]
     },
     "db": {
         "host": "localhost",
@@ -9,6 +16,6 @@
         "name": "fmdb"
     },
     "auth": {
-        "tokenExpiry": 120
+        "tokenExpiry": 1440
     }
 }
