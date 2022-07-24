@@ -499,13 +499,13 @@ module.exports.post_location = (req, res) => {
                 bus_c.line=line_c.name;
                 bus_c.line_index=line_c.index;
             }
-            if (!check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), lineMap)) {
+            if (!check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), lineMap)) {
                 //***************************************** */
                 let count=0;
                 let line_index;
                 let line_name;
                 database.lines().forEach((val,key)=>{
-                    if(check.in_line(parseFloat( bus.loc.lat),parseFloat( bus.loc.long), val.map)){
+                    if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
                         count++;
                         line_index=val.index;
                         line_name=val.name;
