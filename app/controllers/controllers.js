@@ -217,7 +217,7 @@ module.exports.get_all_endusers_locations = (req, res) => {
 
 
 // Log In.
-module.exports.log_in = (req, res) => {
+module.exports.log_in = async(req, res) => {
 
     // Validate request
     if (!req.body || !req.body.username || !req.body.password) {
@@ -228,11 +228,10 @@ module.exports.log_in = (req, res) => {
     }
     
     if(req.body.imei){
-        database.getUsers({username:req.body.username},(result)=>{
-            if(result){
-                database.updateBusInfo({imei:req.body.imei,driver:result[0].name})
-            }
-        })
+        let result=await database.getUsers({username:req.body.username})
+        if(result){
+            database.updateBusInfo({imei:req.body.imei,driver:result[0].name})
+        }
     }
     database.login(req.body.username, req.body.password, (token,role) => {
         res.status(200).send({
@@ -300,7 +299,7 @@ module.exports.validate_token = (req, res) => {
 
 // Get all users
 module.exports.get_users = (req, res) => {
-    database.checkToken(req.header("token"), (result) => {
+    database.checkToken(req.header("token"), async(result) => {
         if (result.role === 'admin' || result.role==="accountant") {
             let q = url.parse(req.url, true).query;
             let query={}
@@ -308,17 +307,15 @@ module.exports.get_users = (req, res) => {
                 query.role=q.role
             }
             
-            database.getUsers(query,(result) => {
-                let users=result
-                if(role==="accountant"){
-                    for(let i=result.length-1;i>0;i--){
-                        if(result[i].role!="driver"){
-                            result.splice(i,1);
-                        }
+            let users=await database.getUsers(query,);
+            if(result.role==="accountant"){
+                for(let i=users.length-1;i>=0;i--){
+                    if(users[i].role!="driver"){
+                        users.splice(i,1);
                     }
                 }
-                res.status(200).send(users);
-            });
+            }
+            res.status(200).send(users);
         }
         else {
             res.status(401).send({
@@ -335,7 +332,7 @@ module.exports.get_users = (req, res) => {
 // Update or add user
 module.exports.update_or_add_user = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin'||result.rloe==="accountant") {
+        if (result.role === 'admin'||result.role==="accountant") {
             if(result.role=="accountant" && req.body.role!="driver"){
                 res.status(401).send({
                     message: "unauthorized"
@@ -378,7 +375,7 @@ module.exports.update_or_add_user = (req, res) => {
 
 // Delete user
 module.exports.delete_user = (req, res) => {
-    database.checkToken(req.header("token"), (result) => {
+    database.checkToken(req.header("token"),async (result) => {
         if (result.role === 'admin'|| result.role==="accountant") {
             let test = true;
             let q = req.params;
@@ -391,17 +388,16 @@ module.exports.delete_user = (req, res) => {
             }
 
             if (test) {
-                database.getUsers({username:q.username},(res)=>{
-                    if(result.role=="accountant" &&res.role!="driver"){
-                        res.status(401).send({
-                            message: "unauthorized"
-                        });
-                        return;
-                    }
-                    database.removeUser({ username: q.username });
-                    res.status(200).send({ message: "Done!" });
-                })
-                
+                let user = await database.getUsers({username:q.username})
+
+                if(result.role=="accountant" &&user[0].role!="driver"){
+                    res.status(401).send({
+                        message: "unauthorized"
+                    });
+                    return;
+                }
+                database.removeUser({ username: q.username });
+                res.status(200).send({ message: "Done!" });
             }
         }
         else {
