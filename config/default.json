@@ -16,6 +16,7 @@
         "name": "fmdb"
     },
     "auth": {
-        "tokenExpiry": 1440
+        "tokenExpiry": 1440,
+        "ticket_expiry_by_month":6
     }
 }
