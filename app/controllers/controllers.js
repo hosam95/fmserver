@@ -307,8 +307,17 @@ module.exports.get_users = (req, res) => {
             if(q.role){
                 query.role=q.role
             }
+            
             database.getUsers(query,(result) => {
-                res.status(200).send(result);
+                let users=result
+                if(role==="accountant"){
+                    for(let i=result.length-1;i>0;i--){
+                        if(result[i].role!="driver"){
+                            result.splice(i,1);
+                        }
+                    }
+                }
+                res.status(200).send(users);
             });
         }
         else {
@@ -326,7 +335,13 @@ module.exports.get_users = (req, res) => {
 // Update or add user
 module.exports.update_or_add_user = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin'||result.rloe==="accountant") {
+            if(result.role=="accountant" && req.body.role!="driver"){
+                res.status(401).send({
+                    message: "unauthorized"
+                });
+                return;
+            }
             let test = true;
 
             // Validate request
@@ -364,7 +379,7 @@ module.exports.update_or_add_user = (req, res) => {
 // Delete user
 module.exports.delete_user = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        if (result.role === 'admin') {
+        if (result.role === 'admin'|| result.role==="accountant") {
             let test = true;
             let q = req.params;
 
@@ -376,8 +391,17 @@ module.exports.delete_user = (req, res) => {
             }
 
             if (test) {
-                database.removeUser({ username: q.username });
-                res.status(200).send({ message: "Done!" });
+                database.getUsers({username:q.username},(res)=>{
+                    if(result.role=="accountant" &&res.role!="driver"){
+                        res.status(401).send({
+                            message: "unauthorized"
+                        });
+                        return;
+                    }
+                    database.removeUser({ username: q.username });
+                    res.status(200).send({ message: "Done!" });
+                })
+                
             }
         }
         else {
