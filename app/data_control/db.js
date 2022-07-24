@@ -533,18 +533,21 @@ class Database {
     });
   }
 
-  getUsers(query,callback) {
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("users").find(query, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
+  async getUsers(query) {
+    let p= new Promise(function(myresolve,myreject){
+      MongoClient.connect(dbUri,async (err, db) => {
         if (err) throw err;
 
-        callback(result);
-        db.close();
+        var dbo = db.db(dbName);
+        let result=await dbo.collection("users").find(query, { projection: { _id: 0, password: 0 } }).toArray();
+        db.close()
+        myresolve(result)
       });
-    });
+    })
+    p.then(function(val){
+      return val;
+    })
+    return p    
   }
 
   async addTicketsIfNew(tickets){
