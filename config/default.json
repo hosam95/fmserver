@@ -4,9 +4,9 @@
         "cors_origin": [
             "http://localhost:3000",
             "https://localhost:3000",
+            "http://fmfortravels.com:3000",
             "http://www.fmfortravels.com:3000",
-            "http://www.fmfortravels.com:3000",
-            "https://www.fmfortravels.com:3000",
+            "https://fmfortravels.com:3000",
             "https://www.fmfortravels.com:3000"
         ]
     },
