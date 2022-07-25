@@ -25,6 +25,7 @@ const dbPort = config.get('db.port');
 const dbName = config.get('db.name');
 const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
+const ticket_expiry_by_month=config.get('auth.ticket_expiry_by_month')
 
 
 class Database {
@@ -561,6 +562,8 @@ class Database {
       let ticket_count= await dbo.collection("tickets").countDocuments({ id: ticket.id })
 
       if(ticket_count==0){
+        ticket.creationtime=new Date()
+        dbo.collection("tickets").createIndex({ "creationtime": 1 }, { expireAfterSeconds:60*60*24*30*ticket_expiry_by_month });
         await dbo.collection("tickets").insertOne(ticket, function(err, res) {
           if (err) throw err;
         });
