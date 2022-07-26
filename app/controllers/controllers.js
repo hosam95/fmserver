@@ -329,6 +329,29 @@ module.exports.get_users = (req, res) => {
     });
 }
 
+// Get all users
+module.exports.get_user = (req, res) => {
+    database.checkToken(req.header("token"), async(result) => {
+        if (result.role === 'admin' || result.role==="accountant") {
+            let q = req.params
+            let query={username:q.username}
+            
+            let users=await database.getUsers(query);
+            
+            res.status(200).send(users[0]);
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
 // Update or add user
 module.exports.update_or_add_user = (req, res) => {
     database.checkToken(req.header("token"), (result) => {

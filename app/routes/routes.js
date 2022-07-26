@@ -33,6 +33,9 @@ module.exports = app => {
     // Delete user
     app.delete("/users/:username", data.delete_user);
 
+    // Delete user
+    app.get("/users/:username", data.get_user);
+
     // Create a new or update line.
     app.post("/line/:name", data.add_or_update_line);
 
