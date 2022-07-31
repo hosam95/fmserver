@@ -518,12 +518,11 @@ class Database {
   }
 
 
-  removeUser(user) {
+  removeUser(query) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      var query = { username: user.username };
 
       dbo.collection("users").deleteOne(query, function (err, res) {
         if (err) throw err;
