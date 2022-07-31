@@ -411,15 +411,15 @@ module.exports.delete_user = (req, res) => {
             }
 
             if (test) {
-                let user = await database.getUsers({username:q.username})
-
+                let query={$or:[{username:q.username},{username:parseInt(q.username)}]}
+                let user = await database.getUsers(query)
                 if(result.role=="accountant" &&user[0].role!="driver"){
                     res.status(401).send({
                         message: "unauthorized"
                     });
                     return;
                 }
-                database.removeUser({ username: q.username });
+                database.removeUser(query);
                 res.status(200).send({ message: "Done!" });
             }
         }
