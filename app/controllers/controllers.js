@@ -563,7 +563,7 @@ module.exports.get_buses = (req, res) => {
     // get specific category case.
     let lines=check.map2set(database.lines(),(a)=>{
         if(a.category==category_id){
-            return a;
+            return a.index;
         }
     })
 
