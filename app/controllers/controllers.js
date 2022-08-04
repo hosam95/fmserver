@@ -687,8 +687,8 @@ module.exports.post_location = (req, res) => {
             let angle = bus.angle;
             if(distance > 1e-10)
                 angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-            bus_c.loc.long = q.longitude;
-            bus_c.loc.lat = q.latitude;
+            bus_c.loc.long = parseFloat(q.longitude);
+            bus_c.loc.lat = parseFloat(q.latitude);
             bus_c.time = Math.round(new Date().getTime() / 1000);
             bus_c.angle=angle;
             let line_c
