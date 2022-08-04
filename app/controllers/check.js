@@ -400,14 +400,27 @@ module.exports.ip_check=(ip,tree)=> {
     
 }
 
-module.exports. map2list=(map)=>{
+module.exports. map2list=(map,filter=(a)=>{return a})=>{
     let l=[];
     map.forEach((val,key) => {
-        l.push(val);
+        let value=filter(val);
+        if(value){
+            l.push(val);
+        }
     });
     return l;
 }
 
+module.exports. map2set=(map,filter=(a)=>{return a})=>{
+    let l=new Set();
+    map.forEach((val,key) => {
+        let value=filter(val);
+        if(value){
+            l.set(val);
+        }
+    });
+    return l;
+}
 module.exports. get_line_by_name=(map,name)=>{
 
     let line=undefined;
@@ -417,4 +430,25 @@ module.exports. get_line_by_name=(map,name)=>{
         }
     });
     return line;
+}
+
+module.exports. line_filter=(line,filter)=>{
+    let filtered_line={}
+    if(filter.name==true){
+        filtered_line.name=line.name;
+    }
+    if(filter.index==true){
+        filtered_line.index=line.index;
+    }
+    if(filter.map==true){
+        filtered_line.map=line.map;
+    }
+    if(filter.stops==true){
+        filtered_line.stops=line.stops;
+    }
+    if(filter.prices==true){
+        filtered_line.prices=line.prices;
+    }
+    
+    return filtered_line;
 }

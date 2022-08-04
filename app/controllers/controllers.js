@@ -11,6 +11,115 @@ module.exports.locations = [];
 let indx = 0;
 let database = db.getInstance();
 
+//add a new category.
+module.exports.new_category=(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        if (result.role === 'admin') {
+            let q= req.body
+            if(!q.id|| !q.name){
+                res.status(400).send({message:"category invalid structure"});
+                return;
+            }
+
+            if(database.categories().has(q.id)){
+                res.status(406).send({message:"category is not new"});
+                return;
+            }
+
+            database.addCategory({id:q.id,name:q.name})
+            res.status(200).send({message:"Done"})
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+//update a category.
+module.exports.update_category=(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        if (result.role === 'admin') {
+            let id=req.params.id
+            let q= req.body
+
+            if(!q.name){
+                res.status(400).send({message:"category invalid structure"});
+                return;
+            }
+
+            if(!database.categories().has(id)){
+                res.status(404).send({message:"category not found"});
+                return;
+            }
+
+            database.updateCategoryInfo({id:id,name:q.name})
+            res.status(200).send({message:"Done"})
+            
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+//delete category.
+module.exports.delete_category=(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        if (result.role === 'admin') {
+            let id=req.params.id;
+            
+            if(!database.categories().has(id)){
+                res.status(404).send({message:"category not found"});
+                return;
+            }
+
+            database.removeCategory({id:id})
+            res.status(200).send({message:"Done"})
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+//get categories.
+module.exports.get_categories=(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        if (result.role === 'admin') {
+            console.log(database.categories())
+            res.status(200).send(check.map2list(database.categories()));
+
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
 //stop sharing location.
 module.exports.remove_enduser_location =(req,res) => {
     let line =req.params.line;
@@ -439,7 +548,31 @@ module.exports.delete_user = (req, res) => {
 
 // Send the buses data.
 module.exports.get_buses = (req, res) => {
-    res.status(200).send(check.map2list(database.buses()));
+    let q = url.parse(req.url, true).query;
+    let category_id="1"
+    if(q.category_id){
+        category_id=q.category_id
+    }
+
+    //get all categorys case
+    if(category_id=="all"){
+        res.status(200).send(check.map2list(database.buses()));
+        return;
+    }
+
+    // get specific category case.
+    let lines=check.map2set(database.lines(),(a)=>{
+        if(a.category==category_id){
+            return a;
+        }
+    })
+
+    let buss=check.map2list(database.buses(),(a)=>{
+        if(lines.has(a.line_index)){
+            return a;
+        }
+    })
+    res.status(200).send(buss);
 }
 
 module.exports.get_bus = (req, res) => {
@@ -455,7 +588,39 @@ module.exports.get_bus = (req, res) => {
 
 // Send the map data.
 module.exports.get_map = (req, res) => {
-    res.status(200).send(check.map2list(database.lines()));
+    let q = url.parse(req.url, true).query;
+    let category_id="1"
+    let filter={
+        name:true,
+        index:true,
+        stops:true,
+        map:true,
+        prices:true
+    }
+
+    if(req.body.filter){
+        filter=req.body.filter
+    }
+    if(q.category_id){
+        category_id=q.category_id
+    }
+
+    let lines
+    if(category_id=="all"){
+        //get all categorys case
+        lines=check.map2list(database.lines());
+    }
+    else{
+        //get a specific category case.
+        lines =check.map2list(database.lines(),(a)=>{
+            if(a.category==category_id){
+                return a;
+            }
+        });
+    }
+    
+    lines.map((line)=>{return check.line_filter(line,filter)})
+    res.status(200).send(lines)
 }
 
 module.exports.get_line = (req, res) => {
@@ -547,7 +712,11 @@ module.exports.post_location = (req, res) => {
                 let count=0;
                 let line_index;
                 let line_name;
+                let category=line_c.category
                 database.lines().forEach((val,key)=>{
+                    if(val.category!=category && category!=undefined && val.category!=undefined){
+                        return;
+                    }
                     if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
                         count++;
                         line_index=val.index;
@@ -611,6 +780,7 @@ module.exports.add_or_update_line = (req, res) => {
             let line_c = {
                 name: '',
                 map: [],
+                category:null,
                 index: null,
                 stops: [],
                 prices:[]
@@ -635,6 +805,7 @@ module.exports.add_or_update_line = (req, res) => {
                 line_c.map = req.body.map;
                 line_c.stops = req.body.stops;
                 line_c.prices=req.body.prices;
+                line_c.category=req.body.category;
                 // if (database.lines.length == 0) {
                 //     indx = 0;
                 // }
