@@ -720,7 +720,7 @@ class Database {
       .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
       .limit( limit ).toArray()
 
-    let count=await dbo.collection("tickets").countDocuments(query)
+    let count=await dbo.collection("req_t").countDocuments(query)
 
     db.close();
     return {tickets:tickets,count:count};
@@ -733,7 +733,7 @@ class Database {
     await dbo.collection("req_t").insertOne(tickets, function(err, res) {
       if (err) throw err;
     });
-    
+
     db.close();
 
   }
