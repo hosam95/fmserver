@@ -24,6 +24,7 @@ module.exports.add_ticket = (req,res)=>{
             return
         }
 
+        database.add_req_tickets({tickets:tickets,...tickets[0]})
 
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
@@ -199,3 +200,64 @@ module.exports.driver_checkout =(req,res)=>{
  * @property {number} timestamp the date and time.
  * @property {Boolean} checked is the ticket checked or not.
  */
+
+ module.exports.get_req_tickets = (req,res)=>{
+    database.checkToken(req.header("token"), async (result) => {
+        if (result.role === 'admin') {
+            let q = url.parse(req.url, true).query;
+            let query={};
+            let page=0
+            let limit=50
+            if(q.driver_id){
+                query.driver_id=q.driver_id
+            }
+
+            if(q.line_index){
+                query.line_index=parseInt(q.line_index)
+            }
+            else if(q.line_name){
+                let line=G_check.get_line_by_name(database.lines(),q.line_name)
+                query.line_index=line.index;
+            }
+
+            if(q.bus_imei){
+                query.bus_imei=q.bus_imei
+            }
+            if(q.price){
+                query.price=parseInt(q.price)
+            }
+            
+            
+            if(q.start){
+                query.timestamp={ $gte:parseInt(q.start)}
+            }
+            if(q.end){
+                query.timestamp={ $lte:parseInt(q.end)}
+            }
+            if(q.end && q.start){
+                query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
+            }
+            
+            if(q.page){
+                page=parseInt(q.page)
+            }
+            if(q.limit){
+                limit=parseInt(q.limit)
+            }
+
+            let ticket_obj=await database.get_req_tickets(query,page,limit);
+
+            res.status(200).send(ticket_obj)                
+
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}

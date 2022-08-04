@@ -5,6 +5,18 @@ module.exports = app => {
 
     /*BUSES APIs:- */
 
+    // add a new category.
+    app.post("/category/add",data.new_category);
+
+    //update a category.
+    app.post("/category/update/:id",data.update_category);
+
+    //delete a category.
+    app.delete("/category/delete/:id",data.delete_category);
+
+    //get categories.
+    app.get("/category",data.get_categories)
+
     //stop sharing location.
     app.post("/enduser/hide/:line",data.remove_enduser_location);
 
@@ -92,6 +104,9 @@ module.exports = app => {
 
 
     app.post("/driver/checkout/:driver_id",tickets.driver_checkout);
+
+    app.get("/req/ticket/search",tickets.get_req_tickets);
+
 
     
 };

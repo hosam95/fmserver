@@ -30,11 +30,22 @@ const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
 class Database {
   #lines = new Map();
   #buses = new Map();
+  #categories=new Map();
+
+  /**
+   * Gets the current categories
+   * 
+   * @returns {Category Map}
+   *  The current categories
+   */
+   categories() {
+    return this.#categories;
+  }
 
   /**
    * Gets the current lines
    * 
-   * @returns {Line[]}
+   * @returns {Line Map}
    *  The current lines
    */
   lines() {
@@ -44,7 +55,7 @@ class Database {
   /**
    * Gets the current buses
    * 
-   * @returns {Bus[]}
+   * @returns {Bus Map}
    *  The current buses
    */
   buses() {
@@ -81,6 +92,20 @@ class Database {
       });
     });
 
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
+        if (err) throw err;
+
+        for(let i=0;i<result.length;i++){
+          this.#categories.set(result[i].id,result[i]);
+        }
+        db.close();
+      });
+    });
+
     // create collections if thay doesn't exist.
 
     MongoClient.connect(dbUri, function (err, db) {
@@ -100,6 +125,68 @@ class Database {
       });
       db.close();
     });
+  }
+
+  /**
+     * Adds a category to the database
+     * 
+     * @param {Category} category The Line category
+     */
+  addCategory(category) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").insertOne(category, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    console.log(category)
+    this.#categories.set(category.id,category);
+    console.log(this.categories())
+  }
+
+  /**
+   * Updates the category info if a category with existing name
+   * 
+   * @param {Category} category The category data
+   */
+   updateCategoryInfo(category) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var categoryQuery = { id: category.id };
+      var newCategory = { $set: category };
+      dbo.collection("categories").updateOne(categoryQuery, newCategory, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    this.#categories.set(category.id,category);
+  }
+
+  
+  /**
+   * Removes a category from the database
+   * 
+   * @param {object} id The id of the category
+   */
+   removeCategory(query) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").deleteOne(query, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    this.#categories.delete(query.id);
   }
 
   /**
@@ -622,6 +709,33 @@ class Database {
       } 
       db.close();
     });
+  }
+
+  async get_req_tickets(query,page,limit){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let tickets=await dbo.collection("req_t").find(query)
+      .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
+      .limit( limit ).toArray()
+
+    let count=await dbo.collection("tickets").countDocuments(query)
+
+    db.close();
+    return {tickets:tickets,count:count};
+  }
+
+  async add_req_tickets(tickets){
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    await dbo.collection("req_t").insertOne(tickets, function(err, res) {
+      if (err) throw err;
+    });
+    
+    db.close();
+
   }
 }
 
