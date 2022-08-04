@@ -416,7 +416,7 @@ module.exports. map2set=(map,filter=(a)=>{return a})=>{
     map.forEach((val,key) => {
         let value=filter(val);
         if(value){
-            l.set(val);
+            l.add(val);
         }
     });
     return l;
