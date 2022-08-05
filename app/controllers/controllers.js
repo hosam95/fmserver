@@ -805,7 +805,9 @@ module.exports.add_or_update_line = (req, res) => {
                 line_c.map = req.body.map;
                 line_c.stops = req.body.stops;
                 line_c.prices=req.body.prices;
-                line_c.category=req.body.category;
+                if(req.body.category){
+                    line_c.category=req.body.category;
+                }
                 // if (database.lines.length == 0) {
                 //     indx = 0;
                 // }
