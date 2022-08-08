@@ -24,7 +24,7 @@ module.exports.add_ticket = (req,res)=>{
             return
         }
 
-        database.add_req_tickets({tickets:tickets,...tickets[0]})
+        database.add_req_tickets({time:new Date(),tickets:tickets,...tickets[0]})
 
         let added_tickets_ids= await database.addTicketsIfNew(tickets)
 
