@@ -816,7 +816,7 @@ module.exports.add_or_update_line = (req, res) => {
                 // }
                 // indx++;
                 line_c.index = req.body.index;
-                if (!check.line_is_new(q.name, check.map2list(database.lines()))) {
+                if (database.lines().has(line_c.index)) {
                     database.updateLineInfo( line_c);
                 }
                 else {
