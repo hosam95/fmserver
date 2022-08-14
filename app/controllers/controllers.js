@@ -458,7 +458,7 @@ module.exports.get_user = (req, res) => {
 
 // add user
 module.exports.add_user = (req, res) => {
-    database.checkToken(req.header("token"), (result) => {
+    database.checkToken(req.header("token"),async (result) => {
         if (result.role === 'admin'||result.role==="accountant") {
             if(result.role=="accountant" && req.body.role!="driver"){
                 res.status(401).send({

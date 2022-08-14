@@ -107,25 +107,37 @@ class Database {
     });
 
     //add the initials categories if they doesn't exist.
-    const db=await MongoClient.connect(dbUri)
-    var dbo = db.db(dbName);
-      
-    let hidden_category= await dbo.collection("categories").countDocuments({ id: "0" })
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
 
-    if(hidden_category==0){
-      await dbo.collection("categories").insertOne({id:"0",name:"hidden"}, function(err, res) {
+      var dbo = db.db(dbName);
+      dbo.collection("categories").countDocuments({ id: "0" },(err, result) => {
         if (err) throw err;
+
+        if(result==0){
+          dbo.collection("categories").insertOne({id:"0",name:"hidden"}, function(err, res) {
+            if (err) throw err;
+          });
+        }
+        db.close();
       });
-    }
+    });
 
-    let main_category= await dbo.collection("categories").countDocuments({ id: "1" })
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
 
-    if(main_category==0){
-      await dbo.collection("categories").insertOne({id:"1",name:"Badr city"}, function(err, res) {
+      var dbo = db.db(dbName);
+      dbo.collection("categories").countDocuments({ id: "1" },(err, result) => {
         if (err) throw err;
+
+        if(result==0){
+          dbo.collection("categories").insertOne({id:"1",name:"Badr city"}, function(err, res) {
+            if (err) throw err;
+          });
+        }
+        db.close();
       });
-    }
-    db.close();
+    });
 
     // create collections if thay doesn't exist.
 
