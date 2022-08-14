@@ -39,13 +39,16 @@ module.exports = app => {
     // Get all users
     app.get("/users", data.get_users);
 
-    // Update or add user
-    app.post("/users", data.update_or_add_user);
+    // add user
+    app.post("/users/new", data.add_user);
+
+    // Update user
+    app.post("/users/:username", data.update_user);
 
     // Delete user
     app.delete("/users/:username", data.delete_user);
 
-    // Delete user
+    // get user
     app.get("/users/:username", data.get_user);
 
     // Create a new or update line.

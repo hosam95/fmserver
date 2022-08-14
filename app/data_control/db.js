@@ -561,8 +561,8 @@ class Database {
     });
   }
 
-  addOrUpdateUser(user) {
-    MongoClient.connect(dbUri, (err, db) => {
+  async addUser(user) {
+    MongoClient.connect(dbUri, async (err, db) => {
       if (err) throw err;
 
       var hashedPassword = ''
@@ -575,7 +575,7 @@ class Database {
       var dbo = db.db(dbName);
       var query = { username: user.username };
 
-      dbo.collection("users").findOne(query, function (err, res) {
+      return dbo.collection("users").findOne(query, function (err, res) {
         if (err) throw err;
 
         if (!res) {
@@ -590,35 +590,49 @@ class Database {
             });
           });
         }
-
         else {
-          MongoClient.connect(dbUri, function (err, db) {
-            if (err) throw err;
-
-            var dbo = db.db(dbName);
-            var newValues = { $set: {} }
-            if (user.password) {
-              newValues.$set.password = hashedPassword;
-            }
-
-            if (user.name) {
-              newValues.$set.name = user.name;
-            }
-
-            if (user.phone_number) {
-              newValues.$set.phone_number = user.phone_number;
-            }
-
-            if (user.role) {
-              newValues.$set.role = user.role;
-            }
-            dbo.collection("users").updateOne(query, newValues, function (err, res) {
-              if (err) throw err;
-
-              db.close();
-            });
-          });
+          db.close();
+          return false;
         }
+
+        db.close();
+        return true;
+      });
+    });
+  }
+
+  UpdateUser(user) {
+    var hashedPassword = ''
+    if (user.password) {
+      var shasum = crypto.createHash('sha1')
+      shasum.update(user.password)
+      hashedPassword = shasum.digest('hex')
+    }
+
+    var query = { username: user.username };
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var newValues = { $set: {} }
+      if (user.password) {
+        newValues.$set.password = hashedPassword;
+      }
+
+      if (user.name) {
+        newValues.$set.name = user.name;
+      }
+
+      if (user.phone_number) {
+        newValues.$set.phone_number = user.phone_number;
+      }
+
+      if (user.role) {
+        newValues.$set.role = user.role;
+      }
+      dbo.collection("users").updateOne(query, newValues, function (err, res) {
+        if (err) throw err;
 
         db.close();
       });

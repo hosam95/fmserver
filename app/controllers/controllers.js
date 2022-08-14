@@ -456,8 +456,8 @@ module.exports.get_user = (req, res) => {
     });
 }
 
-// Update or add user
-module.exports.update_or_add_user = (req, res) => {
+// add user
+module.exports.add_user = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
         if (result.role === 'admin'||result.role==="accountant") {
             if(result.role=="accountant" && req.body.role!="driver"){
@@ -484,7 +484,56 @@ module.exports.update_or_add_user = (req, res) => {
             }
 
             if (test) {
-                database.addOrUpdateUser(req.body);
+                let user_is_new=await database.addUser(req.body);
+                if(user_is_new){
+                    res.status(200).send({ message: "Done!" });
+                }else{
+                    res.status(400).send({message:"user already exists"})
+                }
+                
+            }
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+// Update user 
+module.exports.update_user = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin'||result.role==="accountant") {
+            if(result.role=="accountant" && req.body.role!="driver"){
+                res.status(401).send({
+                    message: "unauthorized"
+                });
+                return;
+            }
+            let test = true;
+            let q= req.params
+            // Validate request
+            if (!req.body) {
+                test = false;
+                res.status(400).send({
+                    message: "Content can not be empty!"
+                });
+            }
+
+            if (!q.username) {
+                test = false;
+                res.status(400).send({
+                    message: "Username is required"
+                });
+            }
+
+            if (test) {
+                database.UpdateUser(req.body);
                 res.status(200).send({ message: "Done!" });
             }
         }
