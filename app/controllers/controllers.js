@@ -775,7 +775,7 @@ module.exports.add_or_update_line = (req, res) => {
             let line_c = {
                 name: '',
                 map: [],
-                category:"1",
+                category:"0",
                 index: null,
                 stops: [],
                 prices:[]
