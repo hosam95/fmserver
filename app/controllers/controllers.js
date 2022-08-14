@@ -16,18 +16,13 @@ module.exports.new_category=(req,res)=>{
     database.checkToken(req.header("token"), async(result) => {
         if (result.role === 'admin') {
             let q= req.body
-            if(!q.id|| !q.name){
+            if( !q.name){
                 res.status(400).send({message:"category invalid structure"});
                 return;
             }
 
-            if(database.categories().has(q.id)){
-                res.status(406).send({message:"category is not new"});
-                return;
-            }
-
-            database.addCategory({id:q.id,name:q.name})
-            res.status(200).send({message:"Done"})
+            let id=await database.addCategory(q.name)
+            res.status(200).send({id:id})
         }
         else {
             res.status(401).send({
