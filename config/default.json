@@ -4,14 +4,14 @@
         "cors_origin": [
             "http://localhost:3000",
             "https://localhost:3000",
-            "http://admin.fmfortravels.com",
-            "https://admin.fmfortravels.com"
+            "http://admin.tare2y.geektech.software",
+            "https://admin.tare2y.geektech.software"
         ]
     },
     "db": {
-        "host": "localhost",
+        "host": "database",
         "port": 27017,
-        "name": "fmdb"
+        "name": "tdb"
     },
     "auth": {
         "tokenExpiry": 1440
