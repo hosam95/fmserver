@@ -456,6 +456,50 @@ module.exports.get_user = (req, res) => {
     });
 }
 
+// Update or add user
+module.exports.update_or_add_user = (req, res) => {
+    database.checkToken(req.header("token"), (result) => {
+        if (result.role === 'admin'||result.role==="accountant") {
+            if(result.role=="accountant" && req.body.role!="driver"){
+                res.status(401).send({
+                    message: "unauthorized"
+                });
+                return;
+            }
+            let test = true;
+
+            // Validate request
+            if (!req.body) {
+                test = false;
+                res.status(400).send({
+                    message: "Content can not be empty!"
+                });
+            }
+
+            if (!req.body.username) {
+                test = false;
+                res.status(400).send({
+                    message: "Username is required"
+                });
+            }
+
+            if (test) {
+                database.addOrUpdateUser(req.body);
+                res.status(200).send({ message: "Done!" });
+            }
+        }
+        else {
+            res.status(401).send({
+                message: "Access Denied"
+            });
+        }
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
 // add user
 module.exports.add_user = (req, res) => {
     database.checkToken(req.header("token"),async (result) => {
@@ -507,7 +551,7 @@ module.exports.add_user = (req, res) => {
 
 // Update user 
 module.exports.update_user = (req, res) => {
-    database.checkToken(req.header("token"), (result) => {
+    database.checkToken(req.header("token"),async (result) => {
         if (result.role === 'admin'||result.role==="accountant") {
             if(result.role=="accountant" && req.body.role!="driver"){
                 res.status(401).send({
@@ -521,7 +565,7 @@ module.exports.update_user = (req, res) => {
             if (!req.body) {
                 test = false;
                 res.status(400).send({
-                    message: "Content can not be empty!"
+                    message: "Content can not be empty"
                 });
             }
 
@@ -533,8 +577,13 @@ module.exports.update_user = (req, res) => {
             }
 
             if (test) {
-                database.UpdateUser(req.body);
-                res.status(200).send({ message: "Done!" });
+                let is_new=await database.UpdateUser(req.body);
+                if(is_new){
+                    res.status(400).send({ message: "account does not exist" });
+                }else{
+                    res.status(200).send({ message: "Done" });
+                }
+                
             }
         }
         else {
@@ -758,7 +807,7 @@ module.exports.post_location = (req, res) => {
                 let line_name;
                 let category=line_c.category
                 database.lines().forEach((val,key)=>{
-                    if(val.category!=category && category!=undefined && val.category!=undefined){
+                    if(val.category!=category && val.category!="0" ){
                         return;
                     }
                     if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){

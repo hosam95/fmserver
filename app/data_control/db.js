@@ -170,9 +170,9 @@ class Database {
     const db=await MongoClient.connect(dbUri)
     var dbo = db.db(dbName);
     
-    let id= await dbo.collection("categories").countDocuments({}).toString();
+    let id= await dbo.collection("categories").countDocuments({});
 
-    await dbo.collection("categories").insertOne({id:id,name:name}, function(err, res) {
+    await dbo.collection("categories").insertOne({id:id.toString(),name:name}, function(err, res) {
       if (err) throw err;
     });
 
@@ -573,8 +573,9 @@ class Database {
     });
   }
 
-  async addUser(user) {
-    MongoClient.connect(dbUri, async (err, db) => {
+  
+  addOrUpdateUser(user) {
+    MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var hashedPassword = ''
@@ -587,7 +588,7 @@ class Database {
       var dbo = db.db(dbName);
       var query = { username: user.username };
 
-      return dbo.collection("users").findOne(query, function (err, res) {
+      dbo.collection("users").findOne(query, function (err, res) {
         if (err) throw err;
 
         if (!res) {
@@ -602,18 +603,76 @@ class Database {
             });
           });
         }
+
         else {
-          db.close();
-          return false;
+          MongoClient.connect(dbUri, function (err, db) {
+            if (err) throw err;
+
+            var dbo = db.db(dbName);
+            var newValues = { $set: {} }
+            if (user.password) {
+              newValues.$set.password = hashedPassword;
+            }
+
+            if (user.name) {
+              newValues.$set.name = user.name;
+            }
+
+            if (user.phone_number) {
+              newValues.$set.phone_number = user.phone_number;
+            }
+
+            if (user.role) {
+              newValues.$set.role = user.role;
+            }
+            dbo.collection("users").updateOne(query, newValues, function (err, res) {
+              if (err) throw err;
+
+              db.close();
+            });
+          });
         }
 
         db.close();
-        return true;
       });
     });
   }
 
-  UpdateUser(user) {
+  async addUser(user) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    var hashedPassword = ''
+    if (user.password) {
+      var shasum = crypto.createHash('sha1')
+      shasum.update(user.password)
+      hashedPassword = shasum.digest('hex')
+    }
+
+    var dbo = db.db(dbName);
+    var query = { username: user.username };
+    let count=await dbo.collection("users").countDocuments(query);
+
+    if(count==0){
+      MongoClient.connect(dbUri, function (err, db) {
+        if (err) throw err;
+
+        var dbo = db.db(dbName);
+        dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
+          if (err) throw err;
+
+          db.close();
+        });
+      });
+      return true;
+    }
+    else{
+      return false;
+    }
+
+  }
+
+  async UpdateUser(user) {
     var hashedPassword = ''
     if (user.password) {
       var shasum = crypto.createHash('sha1')
@@ -623,32 +682,39 @@ class Database {
 
     var query = { username: user.username };
 
-    MongoClient.connect(dbUri, function (err, db) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    let count=await dbo.collection("users").countDocuments(query);
+
+    if(count==0){
+      db.close();
+      return true;
+    }
+
+    var dbo = db.db(dbName);
+    var newValues = { $set: {} }
+    if (user.password) {
+      newValues.$set.password = hashedPassword;
+    }
+
+    if (user.name) {
+      newValues.$set.name = user.name;
+    }
+
+    if (user.phone_number) {
+      newValues.$set.phone_number = user.phone_number;
+    }
+
+    if (user.role) {
+      newValues.$set.role = user.role;
+    }
+    dbo.collection("users").updateOne(query, newValues, function (err, res) {
       if (err) throw err;
 
-      var dbo = db.db(dbName);
-      var newValues = { $set: {} }
-      if (user.password) {
-        newValues.$set.password = hashedPassword;
-      }
-
-      if (user.name) {
-        newValues.$set.name = user.name;
-      }
-
-      if (user.phone_number) {
-        newValues.$set.phone_number = user.phone_number;
-      }
-
-      if (user.role) {
-        newValues.$set.role = user.role;
-      }
-      dbo.collection("users").updateOne(query, newValues, function (err, res) {
-        if (err) throw err;
-
-        db.close();
-      });
+      db.close();
     });
+    return false;
   }
 
 

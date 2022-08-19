@@ -39,6 +39,9 @@ module.exports = app => {
     // Get all users
     app.get("/users", data.get_users);
 
+    // Update or add user
+    app.post("/users", data.update_or_add_user);
+    
     // add user
     app.post("/users/new", data.add_user);
 
