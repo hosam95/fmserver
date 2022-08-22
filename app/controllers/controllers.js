@@ -99,7 +99,6 @@ module.exports.delete_category=(req,res)=>{
 module.exports.get_categories=(req,res)=>{
     database.checkToken(req.header("token"), async(result) => {
         if (result.role === 'admin') {
-            console.log(database.categories())
             res.status(200).send(check.map2list(database.categories()));
 
         }
