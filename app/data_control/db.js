@@ -158,6 +158,15 @@ class Database {
       });
       db.close();
     });
+
+    //create the ticket_id index
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("tickets").createIndex({"id":-1},{unique: true})
+      db.close();
+    });
   }
 
   /**
