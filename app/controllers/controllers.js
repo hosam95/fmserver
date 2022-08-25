@@ -806,6 +806,15 @@ module.exports.post_location = (req, res) => {
                 let line_name;
                 let category=line_c.category
                 database.lines().forEach((val,key)=>{
+                    if(val.category!="1" && category!="0"){
+                        if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
+                            count++;
+                            line_index=val.index;
+                            line_name=val.name;
+                        }
+                        return;
+                    }
+                    
                     if(val.category!=category && val.category!="0" ){
                         return;
                     }
