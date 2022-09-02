@@ -441,6 +441,11 @@ module.exports.get_user = (req, res) => {
             
             let users=await database.getUsers(query);
             
+            if(users==null){
+                res.status(404).send({message:"user not found"})
+                return;
+            }
+
             res.status(200).send(users[0]);
         }
         else {
