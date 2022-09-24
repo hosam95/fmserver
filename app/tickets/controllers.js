@@ -69,19 +69,21 @@ module.exports.get_totals_all_drivers =(req,res)=>{
             query.timestamp={ $gte:parseInt(q.start)}
         }
 
-        let drivers = database.getUsers({role:"driver"})
+        let drivers = await database.getUsers({role:"driver"})
 
         let tickets_list=[]
-        drivers.forEach(async driver => {
+
+        for(let i=0;i<drivers.length;i++){
             let driver_obj={
-                username:driver.username,
-                name:driver.name
+                username:drivers[i].username,
+                name:drivers[i].name
             }
-            query={...query,driver_id:driver.username}
+            query={...query,driver_id:drivers[i].username}
             driver_obj.total=await database.get_total(query);
-            driver_obj.not_checked=await database.get_total({driver_id:driver.username,checked:false});
+            driver_obj.not_checked=await database.get_total({driver_id:drivers[i].username,checked:false});
             tickets_list.push(driver_obj);
-        });
+        }
+        
         
 
         if(tickets_list.length==0){
@@ -133,15 +135,15 @@ module.exports.get_totals_all_buss =(req,res)=>{
         let buss = G_check.map2list(database.buses())
 
         let tickets_list=[]
-        buss.forEach(async bus => {
+        for(let i=0;i<buss.length;i++){
             let bus_obj={
-                imei:bus.imei
+                imei:buss[i].imei
             }
-            query={...query,bus_imei:bus.imei}
+            query={...query,bus_imei:buss[i].imei}
             bus_obj.total=await database.get_total(query);
-            bus_obj.not_checked=await database.get_total({bus_imei:bus.imei,checked:false});
+            bus_obj.not_checked=await database.get_total({bus_imei:buss[i].imei,checked:false});
             tickets_list.push(bus_obj);
-        });
+        }
         
 
         if(tickets_list.length==0){
