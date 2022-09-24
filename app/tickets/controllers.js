@@ -80,11 +80,11 @@ module.exports.get_totals_all_drivers =(req,res)=>{
         }
 
         for(let i=0;i<totals.length;i++){
-            tickets_dect.set(totals[i].driver_id,{...tickets_dect.get(totals[i].driver_id) , total:totals[i].total})
+            tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
         }
 
         for(let i=0;i<not_checked.length;i++){
-            tickets_dect.set(not_checked[i].driver_id,{...tickets_dect.get(not_checked[i].driver_id),not_checked:not_checked[i].total})
+            tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
         }
 
         let tickets_list=G_check.map2list(tickets_dect)
@@ -173,11 +173,11 @@ module.exports.get_totals_all_buss =(req,res)=>{
         }
 
         for(let i=0;i<totals.length;i++){
-            tickets_dect.set(totals[i].bus_imei,{...tickets_dect.get(totals[i].bus_imei) , total:totals[i].total})
+            tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
         }
 
         for(let i=0;i<not_checked.length;i++){
-            tickets_dect.set(not_checked[i].bus_imei,{...tickets_dect.get(not_checked[i].bus_imei),not_checked:not_checked[i].total})
+            tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
         }
 
         let tickets_list=G_check.map2list(tickets_dect)
