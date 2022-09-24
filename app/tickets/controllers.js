@@ -70,10 +70,28 @@ module.exports.get_totals_all_drivers =(req,res)=>{
         }
 
         let drivers = await database.getUsers({role:"driver"})
+        let totals=await database.get_all_totals("$driver_id",query);
+        let not_checked=await database.get_all_totals("$driver_id",{checked:false});
 
-        let tickets_list=[]
+        let tickets_dect=new Map()
 
         for(let i=0;i<drivers.length;i++){
+            tickets_dect.set(drivers[i].username,{username:drivers[i].username,name:drivers[i].name,total:0,not_checked:0})
+        }
+
+        for(let i=0;i<totals.length;i++){
+            tickets_dect.set(totals[i].driver_id,{...tickets_dect.get(totals[i].driver_id) , total:totals[i].total})
+        }
+
+        for(let i=0;i<not_checked.length;i++){
+            tickets_dect.set(not_checked[i].driver_id,{...tickets_dect.get(not_checked[i].driver_id),not_checked:not_checked[i].total})
+        }
+
+        let tickets_list=G_check.map2list(tickets_dect)
+
+
+
+        /*for(let i=0;i<drivers.length;i++){
             let driver_obj={
                 username:drivers[i].username,
                 name:drivers[i].name
@@ -94,7 +112,7 @@ module.exports.get_totals_all_drivers =(req,res)=>{
                 driver_obj.not_checked=0
             }
             tickets_list.push(driver_obj);
-        }
+        }*/
         
         
 
@@ -145,9 +163,25 @@ module.exports.get_totals_all_buss =(req,res)=>{
         }
 
         let buss = G_check.map2list(database.buses())
+        let totals=await database.get_all_totals("$bus_imei",query);
+        let not_checked=await database.get_all_totals("$bus_imei",{checked:false});
 
-        let tickets_list=[]
+        let tickets_dect=new Map()
+
         for(let i=0;i<buss.length;i++){
+            tickets_dect.set(buss[i].imei,{imei:buss[i].imei,total:0,not_checked:0})
+        }
+
+        for(let i=0;i<totals.length;i++){
+            tickets_dect.set(totals[i].bus_imei,{...tickets_dect.get(totals[i].bus_imei) , total:totals[i].total})
+        }
+
+        for(let i=0;i<not_checked.length;i++){
+            tickets_dect.set(not_checked[i].bus_imei,{...tickets_dect.get(not_checked[i].bus_imei),not_checked:not_checked[i].total})
+        }
+
+        let tickets_list=G_check.map2list(tickets_dect)
+        /*for(let i=0;i<buss.length;i++){
             let bus_obj={
                 imei:buss[i].imei
             }
@@ -167,7 +201,7 @@ module.exports.get_totals_all_buss =(req,res)=>{
                 bus_obj.not_checked=0
             }
             tickets_list.push(bus_obj);
-        }
+        }*/
         
 
         if(tickets_list.length==0){

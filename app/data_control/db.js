@@ -859,6 +859,25 @@ class Database {
     db.close();
 
   }
+
+  async get_all_totals(id,query){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:id,
+        total:{$sum:"$price"}
+      }
+    }
+    ]).toArray()
+    
+    db.close();
+    return total;
+  }
 }
 
 
