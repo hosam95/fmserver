@@ -37,6 +37,127 @@ module.exports.add_ticket = (req,res)=>{
     });
 }
 
+module.exports.get_totals_all_drivers =(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        let q = url.parse(req.url, true).query;
+        let query={};
+        
+
+        if(q.line_index){
+            query.line_index=parseInt(q.line_index)
+        }
+        else if(q.line_name){
+            let line=G_check.get_line_by_name(database.lines(),q.line_name)
+            query.line_index=line.index;
+        }
+        
+        if(q.price){
+            query.price=parseInt(q.price)
+        }
+        
+        if(q.checked){
+            query.checked=(q.checked=="true")
+        }
+        
+        if(q.end && q.start){
+            query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
+        }
+        else if(q.end){
+            query.timestamp={ $lte:parseInt(q.end)}
+        }
+        else if(q.start){
+            query.timestamp={ $gte:parseInt(q.start)}
+        }
+
+        let drivers = database.getUsers({role:"driver"})
+
+        let tickets_list=[]
+        drivers.forEach(async driver => {
+            let driver_obj={
+                username:driver.username,
+                name:driver.name
+            }
+            query={...query,driver_id:driver.username}
+            driver_obj.total=await database.get_total(query);
+            driver_obj.not_checked=await database.get_total({driver_id:driver.username,checked:false});
+            tickets_list.push(driver_obj);
+        });
+        
+
+        if(tickets_list.length==0){
+            res.status(200).send({message:"thare is no drivers account yet"})
+            return
+        }
+        res.status(200).send(tickets_list)
+
+        
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
+module.exports.get_totals_all_buss =(req,res)=>{
+    database.checkToken(req.header("token"), async(result) => {
+        let q = url.parse(req.url, true).query;
+        let query={};
+        
+
+        if(q.line_index){
+            query.line_index=parseInt(q.line_index)
+        }
+        else if(q.line_name){
+            let line=G_check.get_line_by_name(database.lines(),q.line_name)
+            query.line_index=line.index;
+        }
+        
+        if(q.price){
+            query.price=parseInt(q.price)
+        }
+        
+        if(q.checked){
+            query.checked=(q.checked=="true")
+        }
+        
+        if(q.end && q.start){
+            query.timestamp={ $gte : parseInt(q.start), $lte : parseInt(q.end)}
+        }
+        else if(q.end){
+            query.timestamp={ $lte:parseInt(q.end)}
+        }
+        else if(q.start){
+            query.timestamp={ $gte:parseInt(q.start)}
+        }
+
+        let buss = G_check.map2list(database.buses())
+
+        let tickets_list=[]
+        buss.forEach(async bus => {
+            let bus_obj={
+                imei:bus.imei
+            }
+            query={...query,bus_imei:bus.imei}
+            bus_obj.total=await database.get_total(query);
+            bus_obj.not_checked=await database.get_total({bus_imei:bus.imei,checked:false});
+            tickets_list.push(bus_obj);
+        });
+        
+
+        if(tickets_list.length==0){
+            res.status(200).send({message:"thare is no buss yet"})
+            return
+        }
+        res.status(200).send(tickets_list)
+
+        
+    }, () => {
+        res.status(401).send({
+            message: "Access Denied"
+        });
+    });
+}
+
 module.exports.get_tickets_total =(req,res)=>{
     database.checkToken(req.header("token"), async(result) => {
         let q = url.parse(req.url, true).query;

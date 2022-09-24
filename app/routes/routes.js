@@ -108,11 +108,12 @@ module.exports = app => {
     app.get("/ticket/search",tickets.get_tickets);
     app.get("/ticket/search/total",tickets.get_tickets_total);
 
+    app.get('/ticket/buss/totals',tickets.get_totals_all_buss);
+    app.get('/ticket/drivers/totals',tickets.get_totals_all_drivers);
+
 
     app.post("/driver/checkout/:driver_id",tickets.driver_checkout);
 
     app.get("/req/ticket/search",tickets.get_req_tickets);
 
-
-    
 };
