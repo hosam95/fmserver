@@ -79,8 +79,20 @@ module.exports.get_totals_all_drivers =(req,res)=>{
                 name:drivers[i].name
             }
             query={...query,driver_id:drivers[i].username}
-            driver_obj.total=await database.get_total(query);
-            driver_obj.not_checked=await database.get_total({driver_id:drivers[i].username,checked:false});
+            total=await database.get_total(query);
+            if(total.length!=0){
+                driver_obj.total=total[0].total
+            }
+            else{
+                driver_obj.total=0
+            }
+            not_checked=await database.get_total({driver_id:drivers[i].username,checked:false});
+            if(total.length!=0){
+                driver_obj.not_checked=not_checked[0].total
+            }
+            else{
+                driver_obj.not_checked=0
+            }
             tickets_list.push(driver_obj);
         }
         
@@ -140,8 +152,20 @@ module.exports.get_totals_all_buss =(req,res)=>{
                 imei:buss[i].imei
             }
             query={...query,bus_imei:buss[i].imei}
-            bus_obj.total=await database.get_total(query);
-            bus_obj.not_checked=await database.get_total({bus_imei:buss[i].imei,checked:false});
+            total=await database.get_total(query);
+            if(total.length!=0){
+                bus_obj.total=total[0].total
+            }
+            else{
+                bus_obj.total=0
+            }
+            not_checked=await database.get_total({bus_imei:buss[i].imei,checked:false});
+            if(total.length!=0){
+                bus_obj.not_checked=not_checked[0].total
+            }
+            else{
+                bus_obj.not_checked=0
+            }
             tickets_list.push(bus_obj);
         }
         
