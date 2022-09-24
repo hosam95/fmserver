@@ -80,11 +80,15 @@ module.exports.get_totals_all_drivers =(req,res)=>{
         }
 
         for(let i=0;i<totals.length;i++){
-            tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
+            if(tickets_dect.has(totals[i]._id)){
+                tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
+            }
         }
 
         for(let i=0;i<not_checked.length;i++){
-            tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
+            if(tickets_dect.has(not_checked[i]._id)){
+                tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
+            }
         }
 
         let tickets_list=G_check.map2list(tickets_dect)
@@ -173,11 +177,15 @@ module.exports.get_totals_all_buss =(req,res)=>{
         }
 
         for(let i=0;i<totals.length;i++){
-            tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
+            if(tickets_dect.has(totals[i]._id)){
+                tickets_dect.set(totals[i]._id,{...tickets_dect.get(totals[i]._id) , total:totals[i].total})
+            }
         }
 
         for(let i=0;i<not_checked.length;i++){
-            tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
+            if(tickets_dect.has(not_checked[i]._id)){
+                tickets_dect.set(not_checked[i]._id,{...tickets_dect.get(not_checked[i]._id),not_checked:not_checked[i].total})
+            }
         }
 
         let tickets_list=G_check.map2list(tickets_dect)
