@@ -22,8 +22,8 @@ this.TTSeter();
     car on the way,
     picked up,
     user cancelled,
-    driver cancelde,
-    arrived
+    arrived,
+    no cars available
     } 
  */
 module.exports.autocomplete = (input) => {
@@ -110,8 +110,6 @@ module.exports.estimate = (input) => {
         }
     };
     
-    //add ride to database and send it to the end user.
-    //database.nweride(ride);
     socket.to(socket.id).emit("estimated rid", ride);
 
 }
@@ -119,31 +117,39 @@ module.exports.estimate = (input) => {
 module.exports.on_order = (input) => {
     var ride=input.ride
     ride.status='looking for a car'
-    ride.id=database.new_ride_id();/**@todo: database method */
+    ride.id=database.new_ride_id();
     ride.user_id=this.get_data_by_socket_id("enduser",socket.id).enduser.id;
     let t=Math.round(new Date().getTime() / 1000);
     let order_s=this.order(ride);
     if(order_s==false){
-        this.send("enduser",null,"no cars available",{},socket.id);
+        this.send("enduser",ride.user_id,"no cars available",{});
+        ride.status="no cars available";
+        this.update_ride(ride,false,true);
+        return;
     }
     ride.rejection_ids.ids.set(order_s,{});
     ride.rejection_ids.last=order_s;
-    time_table.get(t%10).set(ride.id,ride);
+    time_table.get(t%10).add(ride.id);
+    rides.set(ride.id,ride);
+    this.update_ride(ride,false,true);
 }
 
 /**@todo: chech the database operations on the ride */
 module.exports.pickup_check = (input) => {
     if (!input.pickup_check){
-        let ride = database.getride(input.ride_id)
+        let ride = database.read('rides',{id:input.ride_id})
         ride.status='car on the way'
         database.updateride_by_id(ride.id,ride)
         socket.to(database.getdriver(ride.driver_id).socket_id).emit("pickup error",'a7a ya driver');
     }
 }
 
-module.exports.cancel = (input) => {
-    let enduser = thes.get_data_by_socket_id("enduser",socket.id).enduser;
-    let ride =this.get_ride(enduser.current_ride)
+module.exports.user_cancel = (input) => {
+    let ride_id = input.ride_id;
+    let ride =this.get_ride(ride_id);
+
+    let user =this.get_data_by_socket_id("enduser",socket.id).enduser;
+
     if (ride.status=="picked up"){
         let d=this.get_ride_distans(ride.driver_id)
         ride.after_cancel={
@@ -153,9 +159,34 @@ module.exports.cancel = (input) => {
         ride.status="cncelled"
         database.newride(ride)
     }
-    socket.to(this.get_data_by_id("driver",ride.driver_id).socket_id).emit("ride cancelled",ride);
-    socket.to(socket.id).emit("ride cancelled",ride);
-    this.remove_ride(ride);
+    else if(ride.status=="car on the way"){
+        
+        let driver=this.get_data_by_id("driver",ride.driver_id);
+        driver.free=true;
+        driver.current_ride=null;
+        this.update("driver",driver,true,true);
+
+        this.send("driver",ride.driver_id,"ride cancelled",{ride_id:ride.id});
+    }
+    else if(ride.status=="looking for a car"){
+        for(let i=0;i<10;i++){
+            if(time_table.get(i).has(ride.id)){
+                time_table.get(i).delete(ride.id);
+            }
+        }
+    }
+    else{
+        this.send("enduser",user.id,"ride is not in a cancelable phase",{ride_id:ride.id});
+        return;
+    }
+
+    ride.status="user cancelled";
+    this.update_ride(ride,false,true);
+    rides.delete(ride.id);
+
+    user.current_ride=null;
+    this.update("enduser",user,true,true);
+    
 }
 
 //.................................................................................................................
@@ -165,7 +196,7 @@ module.exports. driver_live_location = (input) => {
     if(driver.current_ride!=null){
         let ride=this.get_ride(driver.current_ride);
         if(ride.status=="car on the way"){
-            this.send("enduser",ride.user_id,"car_location",input.location,null);
+            this.send("enduser",ride.user_id,"car_location",input.location);
         }
     }
     CarsMap.set({id:driver.id,lat:input.location.lat,long:input.location.long});
@@ -178,21 +209,20 @@ module.exports.driver_on_accepte = (input) => {
     let driver=this.get_data_by_socket_id("driver",socket.id).deriver;
     
     if(!driver.free){
-        this.send("driver",null,"error",{error:"you already have a ride."},socket.id);
+        this.send("driver",driver.id,"error",{error:"you already have a ride."});
         return;
     }
 
-    let ride=null
+    let ride=rides.get(ride_id);
     let i=0
     for (;i<10;i++){
         if(time_table.get(i).has(ride_id)){
-            ride = time_table.get(i).get(ride_id);
             time_table.get(i).delete(ride_id);
         }
     }
 
-    if(ride==null){
-        this.send("driver",null,"error",{error:"ride is no longer available."},socket.id);
+    if(ride.status!="looking for a car"){
+        this.send("driver",driver.id,"error",{error:"ride is no longer available."});
         return;
     }
 
@@ -210,42 +240,47 @@ module.exports.driver_on_accepte = (input) => {
     this.update("driver",driver,true,true);
     this.update_ride(ride,true,true);
 
-    this.send("driver",driver.id,"user data",user,socket.id);
-    this.send("enduser",user.id,"request status",{status:"request accepted",driver:driver},null);
+    this.send("driver",driver.id,"user data",user);
+    this.send("enduser",user.id,"request status",{status:"request accepted",driver:driver});
 }
 
 module.exports.driver_on_reject = (input) => {
     let ride_id=input.ride_id
     let driver_id=this.get_data_by_socket_id("driver",socket.id).driver.id;
     let time=Math.round(new Date.getTime()/1000);
-    let ride=null
-    let i=0
-    for (;i<10;i++){
-        if(time_table.get(i).has(ride_id)){
-            ride = time_table.get(i).get(ride_id);
-        }
-    }
+    let ride=rides.get(ride_id);
+    
 
     // if olde_reject do nothing
     if(ride.rejection_ids.last!=driver_id){
         return;
     }
 
-    time_table.get(i).delete(ride_id);
-    let order_s=this.order(ride);
-    if(order_s==false){
-        this.send("enduser",null,"no cars available",{},socket.id);
+    for (let i=0;i<10;i++){
+        if(time_table.get(i).has(ride_id)){
+            time_table.get(i).delete(ride_id);
+        }
     }
-    ride.rejection_ids.ids.set(order_s,{});
-    ride.rejection_ids.last=order_s;
+    
+    let new_driver_id=this.order(ride);
+    if(new_driver_id==false){
+        this.send("enduser",ride.user_id,"no cars available",{});
+        ride.status="no cars available";
+        this.update_ride(ride,false,true);
+        rides.delete(ride.id);
+        return;
+    }
+    ride.rejection_ids.ids.set(new_driver_id,{});
+    ride.rejection_ids.last=new_driver_id;
     this.update_ride(ride,true,true);
+    time_table.get(time%10).add(ride_id);
 }
 
 module.exports.driver_on_pickup = (input) => {
     let ride=this.get_ride(input.ride_id);
     ride.status="picked up";
     this.update_ride(ride,true,true);
-    this.send("enduser",ride.user_id,"picked up",{},null);
+    this.send("enduser",ride.user_id,"picked up",{});
 
     /**@todo:set the distance to 0.*/ 
      /*to calculate the price if the ride got calcelled in the middle of the way. */
@@ -260,16 +295,42 @@ module.exports.driver_on_arrive = (input) =>{
     ride= this.get_ride(driver.current_ride)
     ride.status="arrived";
     this.update_ride(ride,false,true);
-    this.remove_ride(ride)
+    ride.delete(ride.id);
 
-    enduser = this.get_data_by_id("enduser",ride.enduser_id).enduser;
+    enduser = this.get_data_by_id("enduser",ride.user_id).enduser;
     enduser.current_ride=null
     this.update("enduser",enduser,true,true);
     
-    this.send("enduser",enduser.id,"arrived",{ride_id:ride.id},null);
+    this.send("enduser",enduser.id,"arrived",{ride_id:ride.id});
 }
 
+module.exports.driver_cancel=(input)=>{
+    let ride_id=input.ride_id;
+    let ride=this.get_ride(ride_id);
+    if(ride.status!="car on the way"){
+        this.send("driver",ride.user_id,"ride can not be canceled",{});
+        return;
+    }
 
+    this.send("enduser",ride.user_id,"driver canceled the ride",ride);
+    ride.status="looking for a car";
+    ride.driver_id=null;
+
+    let t=Math.round(new Date().getTime() / 1000);
+    let nwe_driver_id=this.order(ride);
+    if(nwe_driver_id==false){
+        this.send("enduser",ride.user_id,"no cars available",{});
+        ride.status="no cars available";
+        this.update_ride(ride,false,true);
+        rides.delete(ride.id);
+        return;
+    }
+    ride.rejection_ids.ids.set(nwe_driver_id,{});
+    ride.rejection_ids.last=nwe_driver_id;
+    time_table.get(t%10).add(ride.id);
+    this.update_ride(ride,true,true);
+
+}
 //.................................................................................................................
 
 module.exports. driver_update_location = (socket_id,location) =>{//not used yet.
@@ -285,7 +346,7 @@ module.exports.order = (ride) => {
     if(car.id==null){
         return false;
     }
-    this.send("driver",car.id,"order",ride,null);
+    this.send("driver",car.id,"order",ride);
     return car.id;
 }
 
@@ -384,11 +445,7 @@ module.exports.generte_random_id=(role)=>{
 
 module.exports.update_ride=(ride,ram,db) => {
     if(ram){
-        for (let i=0;i<10;i++){
-            if(time_table.get(i).has(ride.id)){
-                time_table.get(i).set(ride.id,ride);
-            }
-        }
+        rides.set(ride.id,ride)
     }
     if(db){
         /**@todo:updat the ride data in the datebase.*/
@@ -396,11 +453,14 @@ module.exports.update_ride=(ride,ram,db) => {
 }
 
 module.exports.get_ride=(ride_id) => {
-    for (let i=0;i<rides.length;i++){
-        if (rides[i].id==ride_id){
-            return rides[i]
-        }
+
+    if(rides.has(ride_id)){
+        return rides.get(ride_id);
     }
+
+    /**@todo:get the ride from the database and return it */
+
+
     return 'ride not found';
 }
 
@@ -425,7 +485,9 @@ module.exports. update = (role, opjct,ram,db) => {
     if (role == 'driver'){
         if(ram){
             if(drivers_sockets.has(opjct.id)){
-                drivers.set(drivers_sockets.get(opjct.id),opjct);
+                let socket_id=drivers_sockets.get(opjct.id)
+                let driver=drivers.get(socket_id)
+                drivers.set(socket_id,{...driver,...opjct});
             }
         }
         if(db){
@@ -435,7 +497,9 @@ module.exports. update = (role, opjct,ram,db) => {
     else if( role =='enduser'){
         if(ram){
             if(endusers_sockets.has(opjct.id)){
-                endusers.set(endusers_sockets.get(opjct.id),opjct);
+                let socket_id=endusers_sockets.get(opjct.id)
+                let enduser=endusers.get(socket_id)
+                endusers.set(socket_id,{...enduser,...opjct});
             }
         }
         if(db){
@@ -444,12 +508,13 @@ module.exports. update = (role, opjct,ram,db) => {
     }
 }
 
-module.exports. send=(role,id,str,opj,socket)=>{
+module.exports. send=(role,id,str,opj,socket=null)=>{
     if(socket!=null){
         try{
             socket.to(socket).emit(str,opj);
+            
         }catch(e){
-            database.driverqueue(id,str.opj);
+            database.driverqueue(id,str,opj);
         }
         return;
     }
@@ -457,29 +522,33 @@ module.exports. send=(role,id,str,opj,socket)=>{
         if(drivers_sockets.has(id)){
             socket.to(drivers_sockets.get(id)).emit(str,opj);
         }
-        else database.driverqueue(id,str.opj);
+        else database.driverqueue(id,str,opj);
         return;
     }
     if(endusers_sockets.has(id)){
         socket.to(endusers_sockets.get(id)).emit(str,opj);
     }
-    else database.enduserqueue(id,str.opj);
+    else database.enduserqueue(id,str,opj);
 }
 
 module.exports. TTSeter =()=>{
     for(let i=0;i<10;i++){
-        time_table.set(i,new Map());
+        time_table.set(i,new Set());
     }
 }
 
 module.exports. orders_timer=(i)=>{
-    time_table.get(i).forEach((value, key) =>{ 
-        let driver_id=this.order(value);
+    time_table.get(i).forEach((value) =>{ 
+        let ride=rides.get(value);
+        let driver_id=this.order(ride);
         if(driver_id==false){
-            this.send("enduser",null,"no cars available",{},socket.id);
-            value.status="no cars available";
-            this.update_ride(value,false,true);
-            time_table.get(i).delete(key);
+            this.send("enduser",ride.user_id,"no cars available",{});
+            ride.status="no cars available";
+            this.update_ride(ride,false,true);
+            time_table.get(i).delete(value);
+            rides.delete(key);
+            this.update_ride(ride,false,true);
+            return;
         }
         ride.rejection_ids.ids.set(driver_id,{});
         ride.rejection_ids.last=driver_id;
