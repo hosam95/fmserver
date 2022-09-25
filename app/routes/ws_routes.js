@@ -12,7 +12,7 @@ var drivers=new Map();
 var drivers_sockets=new Map();
 var endusers=new Map();
 var endusers_sockets=new Map();
-var rides = [];
+var rides = new Map();
 
 module.exports = io => {
   io.on("connection", (socket) => {
@@ -25,6 +25,7 @@ module.exports = io => {
     })
     .catch((error) => {
       // Handle error
+      /**@todo:disconnect the socket*/ 
     });    
 
     //define messages.
@@ -32,7 +33,7 @@ module.exports = io => {
     socket.on("estimate",data.estimate(input));
     socket.on("order",data.on_order(input));
     socket.on("pickup check",data.pickup_check())//not compleat nor used.
-    socket.on("cancel",data.cancel(input));
+    socket.on("cancel",data.user_cancel(input));
     socket.on("accepte ride",data.driver_on_accepte())
     socket.on("reject ride",data.driver_on_reject())
     socket.on("pickup",data.driver_on_pickup())
@@ -94,6 +95,7 @@ function get_data(uid,socket_id,role){
     })
     .catch((error) => {
       console.log('Error fetching user data:', error);
+      /**@todo:disconnect the socket*/ 
     });
 
 
@@ -127,6 +129,7 @@ function get_data(uid,socket_id,role){
     })
     .catch((error) => {
       console.log('Error fetching user data:', error);
+      /**@todo:disconnect the socket*/ 
     });
 
   }
