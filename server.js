@@ -22,7 +22,13 @@ app.use(bodyParser.json());
 
 // User CORS
 var corsOptions = {
-  origin: config.get('app.cors_origin'),
+  origin: function (origin, callback) {
+    if (config.get('app.cors_origin').indexOf(origin) !== -1 || !origin) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 app.use(cors(corsOptions))
@@ -43,16 +49,19 @@ httpServer.listen(config.get('app.ws_port'), () => {
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
-  for (let i = 0; i < database.buses.lingth; i++) {
-    if (database.buses[i].time == null) {
+  database.buses().forEach((val,key)=> {
+    if (val.time == null) {
     }
-    else if (database.buses[i].time < time - 5) {
+    else if (val.time < time - 5) {
       //send an alert.
-      cn.outOfBoundsBuses.push(database.buses[i])
-      database.buses[i].active=false;
+      let bus=val;
+      bus.active=false;
+      database.updateBusInfo(bus);
+      cn.disconnected.add(val.imei);
+
     }
-  }
-}, 6000);
+  });
+}, 9000);
 
 //clear bad ips
 setInterval(()=>{

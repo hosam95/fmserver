@@ -1,6 +1,21 @@
 const data = require("../controllers/controllers.js");
+const tickets=require("../tickets/controllers");
 
 module.exports = app => {
+
+    /*BUSES APIs:- */
+
+    // add a new category.
+    app.post("/category/add",data.new_category);
+
+    //update a category.
+    app.post("/category/update/:id",data.update_category);
+
+    //delete a category.
+    app.delete("/category/delete/:id",data.delete_category);
+
+    //get categories.
+    app.get("/category",data.get_categories)
 
     //stop sharing location.
     app.post("/enduser/hide/:line",data.remove_enduser_location);
@@ -10,6 +25,7 @@ module.exports = app => {
 
     // get the endusers locations.
     app.get("/bus/:imei/users",data.get_endusers_locations);
+    app.get("/endusers/locations",data.get_all_endusers_locations)
 
     //Log In.
     app.post("/login", data.log_in);
@@ -25,9 +41,18 @@ module.exports = app => {
 
     // Update or add user
     app.post("/users", data.update_or_add_user);
+    
+    // add user
+    app.post("/users/new", data.add_user);
+
+    // Update user
+    app.post("/users/:username", data.update_user);
 
     // Delete user
     app.delete("/users/:username", data.delete_user);
+
+    // get user
+    app.get("/users/:username", data.get_user);
 
     // Create a new or update line.
     app.post("/line/:name", data.add_or_update_line);
@@ -39,7 +64,7 @@ module.exports = app => {
     app.post("/bus/:imei/setactive", data.setActiveBus);
 
     //send out of bounds buses.
-    app.get("/outofbounds", data.out_of_bounds);
+    app.get("/outofbounds/current", data.out_of_bounds);
 
     //send out of bouns history.
     app.get("/outofbounds/history", data.out_of_bounds_history);
@@ -51,6 +76,7 @@ module.exports = app => {
     // Send the map data.
     app.get('/lines', data.get_map);
     app.get('/lines/:name', data.get_line);
+    app.get('/lines/index/:line_index', data.get_line);
 
     // Delete a line with line-name.
     app.delete("/line/:name", data.remove_line);
@@ -64,8 +90,30 @@ module.exports = app => {
     //upload the Bus Location.
     app.put("/bus/:imei/location", data.post_location);
 
+    //testing api.
+    app.get('/test', data.testing);
+
     /* // Send the database tables.
     app.get("/data", data.send_db);
-   */
+    */
+   /**************************************************************************************************************** */
+    //TICKETS APIs:-
+
+    //driver:
+    app.post("/ticket/new",tickets.add_ticket);
+
+    //app.get("/ticket/score",tickets.get_score);
+
+    //admin:
+    app.get("/ticket/search",tickets.get_tickets);
+    app.get("/ticket/search/total",tickets.get_tickets_total);
+
+    app.get('/ticket/buss/totals',tickets.get_totals_all_buss);
+    app.get('/ticket/drivers/totals',tickets.get_totals_all_drivers);
+
+
+    app.post("/driver/checkout/:driver_id",tickets.driver_checkout);
+
+    app.get("/req/ticket/search",tickets.get_req_tickets);
 
 };

@@ -16,6 +16,7 @@ const crypto = require('crypto');
  * @property {string} driver The driver name
  * @property {string} imei A bus identifier
  * @property {string} line The name of the line the bus in
+ * @property {Int32Array} line_index the index of the line the bus in
  * @property {{long: Number, lat: Number}} loc The current location of the bus
  */
 
@@ -25,27 +26,39 @@ const dbName = config.get('db.name');
 const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
 
+
 class Database {
-  #lines = [];
-  #buses = [];
+  #lines = new Map();
+  #buses = new Map();
+  #categories=new Map();
+
+  /**
+   * Gets the current categories
+   * 
+   * @returns {Category Map}
+   *  The current categories
+   */
+   categories() {
+    return this.#categories;
+  }
 
   /**
    * Gets the current lines
    * 
-   * @returns {Line[]}
+   * @returns {Line Map}
    *  The current lines
    */
-  get lines() {
+  lines() {
     return this.#lines;
   }
 
   /**
    * Gets the current buses
    * 
-   * @returns {Bus[]}
+   * @returns {Bus Map}
    *  The current buses
    */
-  get buses() {
+  buses() {
     return this.#buses;
   }
 
@@ -57,7 +70,10 @@ class Database {
       dbo.collection("lines").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
-        this.#lines = result;
+        for(let i=0;i<result.length;i++){
+          this.#lines.set(result[i].index,result[i]);
+        }
+        
         db.close();
       });
     });
@@ -69,10 +85,150 @@ class Database {
       dbo.collection("buses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
 
-        this.#buses = result;
+        for(let i=0;i<result.length;i++){
+          this.#buses.set(result[i].imei,result[i]);
+        }
         db.close();
       });
     });
+
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
+        if (err) throw err;
+
+        for(let i=0;i<result.length;i++){
+          this.#categories.set(result[i].id,result[i]);
+        }
+        db.close();
+      });
+    });
+
+    //add the initials categories if they doesn't exist.
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").countDocuments({ id: "0" },(err, result) => {
+        if (err) throw err;
+
+        if(result==0){
+          dbo.collection("categories").insertOne({id:"0",name:"hidden"}, function(err, res) {
+            if (err) throw err;
+          });
+        }
+        db.close();
+      });
+    });
+
+    MongoClient.connect(dbUri, (err, db) => {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").countDocuments({ id: "1" },(err, result) => {
+        if (err) throw err;
+
+        if(result==0){
+          dbo.collection("categories").insertOne({id:"1",name:"Badr city"}, function(err, res) {
+            if (err) throw err;
+          });
+        }
+        db.close();
+      });
+    });
+
+    // create collections if thay doesn't exist.
+
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.listCollections({name: "tickets"})
+        .next(function(err, collinfo) {
+          if (!collinfo) {
+            MongoClient.connect(dbUri, (err, db) => {
+              if (err) throw err;
+              
+              var dbo = db.db(dbName);
+              dbo.createCollection("tickets");
+            });
+          }
+      });
+      db.close();
+    });
+
+    //create the ticket_id index
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("tickets").createIndex({"id":-1},{unique: true})
+      db.close();
+    });
+  }
+
+  /**
+     * Adds a category to the database
+     * 
+     * @param {String} category_name The Line category
+     */
+  async addCategory(name) {
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let id= await dbo.collection("categories").countDocuments({});
+
+    await dbo.collection("categories").insertOne({id:id.toString(),name:name}, function(err, res) {
+      if (err) throw err;
+    });
+
+    db.close();
+    this.#categories.set(id,{id:id,name:name});
+    return id;
+  }
+
+  /**
+   * Updates the category info if a category with existing name
+   * 
+   * @param {Category} category The category data
+   */
+   updateCategoryInfo(category) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      var categoryQuery = { id: category.id };
+      var newCategory = { $set: category };
+      dbo.collection("categories").updateOne(categoryQuery, newCategory, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    this.#categories.set(category.id,category);
+  }
+
+  
+  /**
+   * Removes a category from the database
+   * 
+   * @param {object} id The id of the category
+   */
+   removeCategory(query) {
+    MongoClient.connect(dbUri, function (err, db) {
+      if (err) throw err;
+
+      var dbo = db.db(dbName);
+      dbo.collection("categories").deleteOne(query, function (err, res) {
+        if (err) throw err;
+
+        db.close();
+      });
+    });
+    this.#categories.delete(query.id);
   }
 
   /**
@@ -91,7 +247,7 @@ class Database {
         db.close();
       });
     });
-    this.#lines.push(line);
+    this.#lines.set(line.index,line);
   }
 
   /**
@@ -110,7 +266,7 @@ class Database {
         db.close();
       });
     });
-    this.#buses.push(bus);
+    this.#buses.set(bus.imei,bus);
   }
 
   /**
@@ -123,7 +279,7 @@ class Database {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      var lineQuery = { name: line.name };
+      var lineQuery = { index: line.index };
       var newLine = { $set: line };
       dbo.collection("lines").updateOne(lineQuery, newLine, function (err, res) {
         if (err) throw err;
@@ -131,8 +287,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#lines.findIndex(x => x.name == line.name);
-    this.#lines[idx] = line;
+    this.#lines.set(line.index,line);
   }
 
   /**
@@ -140,6 +295,7 @@ class Database {
    * 
    * @param {string} name The Line name
    */
+  /**@todo:شوف هتعمل فيها ايه دي */
   updateLineInfoWithName(name, line) {
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
@@ -175,8 +331,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == bus.imei);
-    this.#buses[idx] = bus;
+    this.#buses.set(bus.imei,{ ...this.#buses.get(bus.imei), ...bus});
   }
 
   /**
@@ -194,11 +349,15 @@ class Database {
       dbo.collection("buses").updateOne(busQuery, newBus, function (err, res) {
         if (err) throw err;
 
+      });
+
+      dbo.collection("buses").findOne(busQuery, function (err, res) {
+        if (err) throw err;
+
+        this.#buses.set(res.imei,res);
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == imei);
-    this.#buses[idx] = { ...this.#buses[idx], ...bus };
   }
 
   /**
@@ -218,8 +377,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#lines.findIndex(x => x.name == line.name);
-    this.#lines.splice(idx, 1);
+    this.#lines.delete(line.index);
   }
 
   /**
@@ -239,8 +397,7 @@ class Database {
         db.close();
       });
     });
-    var idx = this.#buses.findIndex(x => x.imei == bus.imei);
-    this.#buses.splice(idx, 1);
+    this.#buses.delete(bus.imei);
   }
 
   /**
@@ -277,6 +434,8 @@ class Database {
   getOutOfBoundsBuses(callback) {
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
+
+      var dbo = db.db(dbName);
 
       dbo.collection("outOfBoundsBuses").find({}, { projection: { _id: 0 } }).toArray((err, result) => {
         if (err) throw err;
@@ -325,6 +484,7 @@ class Database {
           errorCallback();
         }
         else {
+          let role=result.role;
           MongoClient.connect(dbUri, (err, db) => {
             if (err) throw err;
 
@@ -335,13 +495,13 @@ class Database {
             var tokenEntry = {
               token: token,
               userId: result._id,
-              createdAt: new Date()
+              creationTime: new Date()
             };
 
-            dbo.collection("tokens").createIndex({ "createdAt": 1 }, { expireAfterSeconds: tokenExpiry * 60 });
+            dbo.collection("tokens").createIndex({ "creationTime": 1 }, { expireAfterSeconds: tokenExpiry * 60 });
             dbo.collection("tokens").insertOne(tokenEntry, (err, result) => {
               db.close();
-              callback(token);
+              callback(token,role);
             });
           });
         }
@@ -422,6 +582,7 @@ class Database {
     });
   }
 
+  
   addOrUpdateUser(user) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
@@ -462,6 +623,14 @@ class Database {
               newValues.$set.password = hashedPassword;
             }
 
+            if (user.name) {
+              newValues.$set.name = user.name;
+            }
+
+            if (user.phone_number) {
+              newValues.$set.phone_number = user.phone_number;
+            }
+
             if (user.role) {
               newValues.$set.role = user.role;
             }
@@ -478,12 +647,91 @@ class Database {
     });
   }
 
-  removeUser(user) {
+  async addUser(user) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    var hashedPassword = ''
+    if (user.password) {
+      var shasum = crypto.createHash('sha1')
+      shasum.update(user.password)
+      hashedPassword = shasum.digest('hex')
+    }
+
+    var dbo = db.db(dbName);
+    var query = { username: user.username };
+    let count=await dbo.collection("users").countDocuments(query);
+
+    if(count==0){
+      MongoClient.connect(dbUri, function (err, db) {
+        if (err) throw err;
+
+        var dbo = db.db(dbName);
+        dbo.collection("users").insertOne({ ...user, password: hashedPassword }, function (err, res) {
+          if (err) throw err;
+
+          db.close();
+        });
+      });
+      return true;
+    }
+    else{
+      return false;
+    }
+
+  }
+
+  async UpdateUser(user) {
+    var hashedPassword = ''
+    if (user.password) {
+      var shasum = crypto.createHash('sha1')
+      shasum.update(user.password)
+      hashedPassword = shasum.digest('hex')
+    }
+
+    var query = { username: user.username };
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    let count=await dbo.collection("users").countDocuments(query);
+
+    if(count==0){
+      db.close();
+      return true;
+    }
+
+    var dbo = db.db(dbName);
+    var newValues = { $set: {} }
+    if (user.password) {
+      newValues.$set.password = hashedPassword;
+    }
+
+    if (user.name) {
+      newValues.$set.name = user.name;
+    }
+
+    if (user.phone_number) {
+      newValues.$set.phone_number = user.phone_number;
+    }
+
+    if (user.role) {
+      newValues.$set.role = user.role;
+    }
+    dbo.collection("users").updateOne(query, newValues, function (err, res) {
+      if (err) throw err;
+
+      db.close();
+    });
+    return false;
+  }
+
+
+  removeUser(query) {
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 
       var dbo = db.db(dbName);
-      var query = { username: user.username };
 
       dbo.collection("users").deleteOne(query, function (err, res) {
         if (err) throw err;
@@ -493,18 +741,142 @@ class Database {
     });
   }
 
-  getUsers(callback) {
-    MongoClient.connect(dbUri, (err, db) => {
-      if (err) throw err;
-
-      var dbo = db.db(dbName);
-      dbo.collection("users").find({}, { projection: { _id: 0, password: 0 } }).toArray((err, result) => {
+  async getUsers(query) {
+    let p= new Promise(function(myresolve,myreject){
+      MongoClient.connect(dbUri,async (err, db) => {
         if (err) throw err;
 
-        callback(result);
-        db.close();
+        var dbo = db.db(dbName);
+        let result=await dbo.collection("users").find(query, { projection: { _id: 0, password: 0 } }).toArray();
+        db.close()
+        myresolve(result)
       });
+    })
+    p.then(function(val){
+      return val;
+    })
+    return p    
+  }
+
+  async addTicketsIfNew(tickets){
+    let new_ids=[];
+    for (let i=0;i<tickets.length;i++ ){
+      let ticket=tickets[i]
+      ticket.checked=false;
+      const db=await MongoClient.connect(dbUri)
+      var dbo = db.db(dbName);
+      
+      let ticket_count= await dbo.collection("tickets").countDocuments({ id: ticket.id })
+
+      if(ticket_count==0){
+        await dbo.collection("tickets").insertOne(ticket, function(err, res) {
+          if (err) throw err;
+        });
+        new_ids.push(ticket.id)
+      }
+
+      db.close();
+
+      if(i+1==tickets.length){
+        return new_ids;
+      }
+    }
+    
+  }
+
+  async get_total(query){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:null,
+        total:{$sum:"$price"}
+      }
+    }
+    ]).toArray()
+    
+    db.close();
+    return total;
+  }
+
+  async get_tickets(query,page,limit){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let tickets=await dbo.collection("tickets").find(query)
+      .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
+      .limit( limit ).toArray()
+
+    let count=await dbo.collection("tickets").countDocuments(query)
+
+    db.close();
+    return {tickets:tickets,count:count};
+  }
+
+
+  async driver_checkout(driver_id){
+   
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    return await dbo.collection("tickets").updateMany({driver_id:driver_id,checked:false},{$set:{checked:true}},(err,res)=>{
+      if (err){
+        db.close();
+        throw err
+      } 
+      db.close();
     });
+  }
+
+  async get_req_tickets(query,page,limit){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let tickets=await dbo.collection("req_t").find(query)
+      .skip( page > 0 ? ( ( page - 1 ) * limit ) : 0 )
+      .limit( limit ).toArray()
+
+    let count=await dbo.collection("req_t").countDocuments(query)
+
+    db.close();
+    return {tickets:tickets,count:count};
+  }
+
+  async add_req_tickets(tickets){
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    await dbo.collection("req_t").insertOne(tickets, function(err, res) {
+      if (err) throw err;
+    });
+
+    db.close();
+
+  }
+
+  async get_all_totals(id,query){
+
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let total=await dbo.collection("tickets").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:id,
+        total:{$sum:"$price"}
+      }
+    }
+    ]).toArray()
+    
+    db.close();
+    return total;
   }
 }
 
@@ -527,3 +899,5 @@ class Singleton {
 }
 
 module.exports.Database = Singleton;
+
+
