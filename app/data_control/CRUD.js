@@ -1,4 +1,4 @@
-module.exports.CRUD= class CRUD{
+ class CRUD{
     collections=["cars","c_users","c_drivers","rides","places"]
     async create(collection,val){
         if(!this.#check_collection(collection)){
@@ -67,3 +67,5 @@ module.exports.CRUD= class CRUD{
         return false;
     }
 }
+
+module.exports =CRUD;

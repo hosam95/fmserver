@@ -1,6 +1,6 @@
 const CRUD=require('./CRUD')
 
-module.exports.WS_db=class Ws_db extends CRUD {
+class Ws_db extends CRUD {
     async new_ride_id(){
         const db=await MongoClient.connect(dbUri)
         var dbo = db.db(dbName);
@@ -10,3 +10,5 @@ module.exports.WS_db=class Ws_db extends CRUD {
     }
 
 }
+
+module.exports =Ws_db

@@ -82,6 +82,6 @@ setInterval(()=>{
 
 //set the orders loop timer.
 setInterval(()=>{
-  let time =Math.round(new Date.getTime() /1000);
+  let time =Math.round(new Date().getTime() /1000);
   ws_controllers.orders_timer(time%10);
 },1000)

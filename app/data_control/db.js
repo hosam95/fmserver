@@ -1,6 +1,7 @@
 const config = require('config');
 const MongoClient = require('mongodb').MongoClient;
 const crypto = require('crypto');
+const Ws_db=require('./Ws_db');
 
 /**
  * @typedef {Object} Line
@@ -27,7 +28,7 @@ const dbUri = `mongodb://${dbHost}:${dbPort}`;
 const tokenExpiry = config.get('auth.tokenExpiry'); // Expiry in minutes
 
 
-class Database {
+class Database extends Ws_db{
   #lines = new Map();
   #buses = new Map();
   #categories=new Map();
@@ -63,6 +64,7 @@ class Database {
   }
 
   constructor() {
+    super();
     MongoClient.connect(dbUri, (err, db) => {
       if (err) throw err;
 

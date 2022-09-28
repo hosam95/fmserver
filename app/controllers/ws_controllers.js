@@ -12,7 +12,6 @@ var long=null
 var lat=null
 
 var time_table=new Map();
-this.TTSeter();
 
 /**
  * 
@@ -139,7 +138,7 @@ module.exports.pickup_check = (input) => {
     if (!input.pickup_check){
         let ride = database.read('rides',{id:input.ride_id})
         ride.status='car on the way'
-        database.updateride_by_id(ride.id,ride)
+        database.update("rides",{id:ride.id},ride)
         socket.to(database.getdriver(ride.driver_id).socket_id).emit("pickup error",'a7a ya driver');
     }
 }
@@ -536,6 +535,8 @@ module.exports. TTSeter =()=>{
         time_table.set(i,new Set());
     }
 }
+this.TTSeter();
+
 
 module.exports. orders_timer=(i)=>{
     time_table.get(i).forEach((value) =>{ 

@@ -1,6 +1,7 @@
 {
     "app": {
         "port": 4000,
+        "ws_port":80,
         "cors_origin": [
             "http://localhost:3000",
             "https://localhost:3000",
