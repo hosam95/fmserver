@@ -139,7 +139,7 @@ module.exports.pickup_check = (input) => {
         let ride = database.read('rides',{id:input.ride_id})
         ride.status='car on the way'
         database.update("rides",{id:ride.id},ride)
-        socket.to(database.getdriver(ride.driver_id).socket_id).emit("pickup error",'a7a ya driver');
+        this.send('driver',ride.driver_id,"pickup error",'a7a ya driver')
     }
 }
 
@@ -156,7 +156,7 @@ module.exports.user_cancel = (input) => {
             price:3+(d*3),
         }
         ride.status="cncelled"
-        database.newride(ride)
+        database.create('rides',ride)
     }
     else if(ride.status=="car on the way"){
         
@@ -227,7 +227,7 @@ module.exports.driver_on_accepte = (input) => {
 
     let user =this.get_data_by_id("enduser",ride.user_id);
     if(user==null){
-        user=database.getenduser(ride.user_id);
+        user=database.read('endusers',{id:ride.user_id})[0]
     }
     ride.status="car on the way"
     ride.driver_id=driver_id
@@ -447,7 +447,7 @@ module.exports.update_ride=(ride,ram,db) => {
         rides.set(ride.id,ride)
     }
     if(db){
-        /**@todo:updat the ride data in the datebase.*/
+        database.update('rides',{id:ride.id},ride)
     }
 }
 
@@ -457,8 +457,11 @@ module.exports.get_ride=(ride_id) => {
         return rides.get(ride_id);
     }
 
-    /**@todo:get the ride from the database and return it */
+    let ride=database.read('rides',{id:ride_id})
 
+    if(ride.length>0){
+        return ride[0];
+    }
 
     return 'ride not found';
 }
@@ -490,7 +493,7 @@ module.exports. update = (role, opjct,ram,db) => {
             }
         }
         if(db){
-            /**@todo:update the driver data in the database.*/
+            database.update('c_drivers',{id:opjct.id},opjct);
         }
     }
     else if( role =='enduser'){
@@ -502,32 +505,23 @@ module.exports. update = (role, opjct,ram,db) => {
             }
         }
         if(db){
-            /**@todo:update the enduser data in the database.*/
+            database.update('endusers',{id:opjct.id},opjct);
         }
     }
 }
 
-module.exports. send=(role,id,str,opj,socket=null)=>{
-    if(socket!=null){
-        try{
-            socket.to(socket).emit(str,opj);
-            
-        }catch(e){
-            database.driverqueue(id,str,opj);
-        }
-        return;
-    }
+module.exports. send=(role,id,str,opj)=>{
     if(role=="driver"){
         if(drivers_sockets.has(id)){
             socket.to(drivers_sockets.get(id)).emit(str,opj);
         }
-        else database.driverqueue(id,str,opj);
+        else database.queue(id,str,opj,"driver");
         return;
     }
     if(endusers_sockets.has(id)){
         socket.to(endusers_sockets.get(id)).emit(str,opj);
     }
-    else database.enduserqueue(id,str,opj);
+    else database.queue(id,str,opj,"enduser");
 }
 
 module.exports. TTSeter =()=>{

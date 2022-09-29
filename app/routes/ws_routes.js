@@ -1,4 +1,4 @@
-const data = require("../controllers/ws_controllers.js");
+const controller = require("../controllers/ws_controllers.js");
 const db = require('../data_control/db.js').Database;
 var admin = require("firebase-admin");
 var serviceAccount = require("./serviceAccountKey.json");
@@ -21,7 +21,9 @@ module.exports = io => {
     admin.auth().verifyIdToken(socket.handshake.headers.token)
     .then((decodedToken) => {
     const uid = decodedToken.uid;
-    get_data(uid,socket.id,socket.handshake.headers.role)
+    let role=socket.handshake.headers.role
+    cache_data(uid,socket.id,role)
+    send_queued(uid,role)
     })
     .catch((error) => {
       // Handle error
@@ -29,16 +31,16 @@ module.exports = io => {
     });    
 
     //define messages.
-    socket.on("autocomplete",data.outocomplete(input));
-    socket.on("estimate",data.estimate(input));
-    socket.on("order",data.on_order(input));
-    socket.on("pickup check",data.pickup_check())//not compleat nor used.
-    socket.on("cancel",data.user_cancel(input));
-    socket.on("accepte ride",data.driver_on_accepte())
-    socket.on("reject ride",data.driver_on_reject())
-    socket.on("pickup",data.driver_on_pickup())
-    socket.on("arrive",data.driver_on_arrive())
-    socket.on("live lication",data.driver_live_location())
+    socket.on("autocomplete",controller.outocomplete(input));
+    socket.on("estimate",controller.estimate(input));
+    socket.on("order",controller.on_order(input));
+    socket.on("pickup check",controller.pickup_check())//not compleat nor used.
+    socket.on("cancel",controller.user_cancel(input));
+    socket.on("accepte ride",controller.driver_on_accepte())
+    socket.on("reject ride",controller.driver_on_reject())
+    socket.on("pickup",controller.driver_on_pickup())
+    socket.on("arrive",controller.driver_on_arrive())
+    socket.on("live lication",controller.driver_live_location())
 
     socket.on("disconnect",()=>{
       for (let i=0;i<endusers.length();i++){
@@ -63,12 +65,12 @@ module.exports = io => {
 
 };
 
-function get_data(uid,socket_id,role){
+function cache_data(uid,socket_id,role){
 
   if (role=="driver"){
-    let driver= database.get_driver(uid)
-    if (driver != null){
-      drivers.set(socket_id,driver);
+    let driver= database.read('c_drivers',{id:uid})
+    if (driver.length != 0){
+      drivers.set(socket_id,driver[0]);
       drivers_sockets.set(uid,socket_id);
       return;
     }
@@ -86,10 +88,9 @@ function get_data(uid,socket_id,role){
         rate:{
           rate:0,
           rate_times:0
-        },
-        queu:[]
+        }
       }
-      database.add_driver(driver)
+      database.create('c_drivers',driver)
       drivers.set(socket_id,driver);
       drivers_sockets.set(uid,socket_id);
     })
@@ -101,9 +102,9 @@ function get_data(uid,socket_id,role){
 
   }
   else if(role =="enduser"){
-    let enduser = database.get_enduser(uid)
-    if (enduser != null){
-      endusers.set(socket_id,enduser);
+    let enduser = database.read('endusers',{id:uid})
+    if (enduser.length != 0){
+      endusers.set(socket_id,enduser[0]);
       endusers_sockets.set(uid,socket_id);
 
       return;
@@ -120,10 +121,9 @@ function get_data(uid,socket_id,role){
         session_token:null,
         home:null,
         work:null,
-        places:[],
-        queu:[]
+        places:[]
       }
-      database.add_enduser(enduser);
+      database.create('endusers',enduser)
       endusers.set(socket_id,enduser);
       endusers_sockets.set(uid,socket_id);
     })
@@ -134,3 +134,15 @@ function get_data(uid,socket_id,role){
 
   }
 } 
+
+function send_queued(id,role){
+  let queue = database.read('queue',{uid:id,role:role})
+  queue.forEach(val => {
+    try{
+      socket.to(drivers_sockets.get(id)).emit(val.str,val.opject);
+      database.delete('queue',{_id:val._id})
+    }catch(e){
+      //do nothing
+    }
+  });
+}

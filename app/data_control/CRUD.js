@@ -1,5 +1,5 @@
  class CRUD{
-    collections=["cars","c_users","c_drivers","rides","places"]
+    collections=["cars","endusers","c_drivers","rides","places","queue"]
     async create(collection,val){
         if(!this.#check_collection(collection)){
             return false
