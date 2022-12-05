@@ -758,6 +758,17 @@ class Database {
     return p    
   }
 
+  async saveBusInHestory(bus){
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    dbo .collection("BussHistory").insertOne(bus,function(err,res){
+      if(err) throw err;
+
+      db.close;
+    });
+  }
+
   async addTicketsIfNew(tickets){
     let new_ids=[];
     for (let i=0;i<tickets.length;i++ ){

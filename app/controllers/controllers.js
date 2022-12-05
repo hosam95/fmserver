@@ -432,7 +432,7 @@ module.exports.get_users = (req, res) => {
     });
 }
 
-// Get all users
+// Get a user
 module.exports.get_user = (req, res) => {
     database.checkToken(req.header("token"), async(result) => {
         if (result.role === 'admin' || result.role==="accountant") {
@@ -749,114 +749,132 @@ module.exports.get_line = (req, res) => {
 //post buses location.
 module.exports.post_location = (req, res) => {
     database.checkToken(req.header("token"), (result) => {
-        let test = true;
         let imei = req.params.imei;
         let q = url.parse(req.url, true).query;
 
         // Validate request
         if (!req.body) {
-            test = false;
             res.status(400).send({
                 message: "Content can not be empty!"
             });
+            return
         }
 
         if (!database.buses().has(imei)) {
-            test = false;
             res.status(404).send({
                 message: "bus not found!"
             });
+            return
         }
 
         if (!check.posted_location(q)) {
-            test = false;
             res.status(400).send({
                 message: "Content structure is not correct!"
             });
+            return
         }
 
-        if (test) {
-            let bus;
-            let bus_c={loc:{}};
-            bus = database.buses().get(imei);
-            bus_c.imei=bus.imei;
-            let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-            let angle = bus.angle;
-            if(distance > 1e-10)
-                angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
-            bus_c.loc.long = parseFloat(q.longitude);
-            bus_c.loc.lat = parseFloat(q.latitude);
-            bus_c.time = Math.round(new Date().getTime() / 1000);
-            bus_c.angle=angle;
-            let line_c
-            let lineMap
-            if(bus.line_index!==undefined){
-                line_c=database.lines().get(bus.line_index);
-            }else{
-                line_c=check.get_line_by_name(database.lines(),bus.line)
-            }
-            if(line_c=== undefined){
-                bus_c.line=[...database.lines()][0][1].name;
-                bus_c.line_index=[...database.lines()][0][1].index;
-                lineMap=[...database.lines()][0][1].map;
-            }else{
-                lineMap=line_c.map;
-                bus_c.line=line_c.name;
-                bus_c.line_index=line_c.index;
-            }
-            if (!check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), lineMap)) {
-                //***************************************** */
-                let count=0;
-                let line_index;
-                let line_name;
-                let category=line_c.category
-                database.lines().forEach((val,key)=>{
-                    if(val.category!="1" && category!="0"){
-                        if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
-                            count++;
-                            line_index=val.index;
-                            line_name=val.name;
-                        }
-                        return;
-                    }
-                    
-                    if(val.category!=category && val.category!="0" ){
-                        return;
-                    }
+        //response 200
+        res.status(200).send("Done");
+
+        
+        let bus;
+        let bus_c={loc:{}};
+        bus = database.buses().get(imei);
+        bus_c.imei=bus.imei;
+
+        //update angle
+        let distance = sqrDistance2Points(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
+        let angle = bus.angle;
+        if(distance > 1e-10)
+            angle = calculateAngle(bus.loc.long,bus.loc.lat,q.longitude,q.latitude);
+        
+        //ready the bus object
+        bus_c.loc.long = parseFloat(q.longitude);
+        bus_c.loc.lat = parseFloat(q.latitude);
+        bus_c.time = Math.round(new Date().getTime() / 1000);
+        bus_c.angle=angle;
+
+        //get the line & mape, and assign line name & index to the bus
+        let line_c
+        let lineMap
+        if(bus.line_index!==undefined){
+            line_c=database.lines().get(bus.line_index);
+        }else{
+            line_c=check.get_line_by_name(database.lines(),bus.line)
+        }
+        if(line_c=== undefined){
+            bus_c.line=[...database.lines()][0][1].name;
+            bus_c.line_index=[...database.lines()][0][1].index;
+            lineMap=[...database.lines()][0][1].map;
+        }else{
+            lineMap=line_c.map;
+            bus_c.line=line_c.name;
+            bus_c.line_index=line_c.index;
+        }
+
+        //IN BOUNDS check
+        if (!check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), lineMap)) {
+            //auto switch line ->
+            //***************************************** */
+            let count=0;
+            let line_index;
+            let line_name;
+            let category=line_c.category
+            database.lines().forEach((val,key)=>{
+                if(val.category!="1" && category!="0"){
                     if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
                         count++;
                         line_index=val.index;
                         line_name=val.name;
                     }
-                })
-
-                if(count==1){
-                    bus_c.line=line_name;
-                    bus_c.line_index=line_index;
+                    return;
                 }
-                /***************************************** */
-                else{
-                    bus_c.active=false;
-                    if (!this.outOfBoundsBuses.has(bus.imei)) {
-                        this.outOfBoundsBuses.add(bus.imei);
-                        database.addOutOfBoundsBus(bus);
-                    }
+                
+                if(val.category!=category && val.category!="0" ){
+                    return;
+                }
+                if(check.in_line(parseFloat( bus_c.loc.lat),parseFloat( bus_c.loc.long), val.map)){
+                    count++;
+                    line_index=val.index;
+                    line_name=val.name;
+                }
+            })
+
+            if(count==1){
+                bus_c.line=line_name;
+                bus_c.line_index=line_index;
+            }
+            /***************************************** */
+            //set as OUT OF BOUNDS
+            else{
+                bus_c.active=false;
+                if (!this.outOfBoundsBuses.has(bus.imei)) {
+                    this.outOfBoundsBuses.add(bus.imei);
+                    database.addOutOfBoundsBus(bus);
                 }
             }
-            else {
-                if(this.outOfBoundsBuses.has(bus.imei)){
-                    this.outOfBoundsBuses.delete(bus.imei);
-                    bus_c.active=true;
-                }
-            }
-
-            if(this.disconnected.has(bus.imei)){
-                this.disconnected.delete(bus.imei);
+        }
+        else {
+            //assure state == IN BOUNDS
+            if(this.outOfBoundsBuses.has(bus.imei)){
+                this.outOfBoundsBuses.delete(bus.imei);
                 bus_c.active=true;
             }
-            database.updateBusInfo(bus_c);
-            res.status(200).send("Done");
         }
+
+        //assure state == CONNECTED
+        if(this.disconnected.has(bus.imei)){
+            this.disconnected.delete(bus.imei);
+            bus_c.active=true;
+        }
+
+        //update bus
+        database.updateBusInfo(bus_c);
+
+        //save the bus object in hestory
+        database.saveBusInHestory(bus_c);
+
     }, () => {
         res.status(401).send({
             message: "Access Denied"
