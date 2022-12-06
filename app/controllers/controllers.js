@@ -873,6 +873,7 @@ module.exports.post_location = (req, res) => {
         database.updateBusInfo(bus_c);
 
         //save the bus object in hestory
+        bus_c.createdAt= new Date();
         database.saveBusInHestory(bus_c);
 
     }, () => {

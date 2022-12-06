@@ -159,11 +159,14 @@ class Database {
       db.close();
     });
 
-    //create the ticket_id index
+    //create the indexs
     MongoClient.connect(dbUri, function (err, db) {
       if (err) throw err;
 
       var dbo = db.db(dbName);
+      //the BUSS HISTORY index
+      dbo.collection("BussHistory").createIndex({ "createdAt": 1 }, { expireAfterSeconds: 60 * 60 * 24 * 60 });
+      //the TICKETS index
       dbo.collection("tickets").createIndex({"id":-1},{unique: true})
       db.close();
     });
