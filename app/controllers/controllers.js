@@ -330,6 +330,7 @@ module.exports.log_in = async(req, res) => {
         return;
     }
     
+    
     if(req.body.imei){
         let result=await database.getUsers({username:req.body.username})
         if(result){
@@ -644,11 +645,20 @@ module.exports.delete_user = (req, res) => {
 //..................................................................
 
 // Send the buses data.
-module.exports.get_buses = (req, res) => {
+module.exports.get_buses =async (req, res) => {
     let q = url.parse(req.url, true).query;
     let category_id="1"
     if(q.category_id){
         category_id=q.category_id
+    }
+
+    console.log("1")
+    if(q.time){
+        let buss=await database.getBussHistory(parseInt(q.time),category_id)
+        console.log("2")
+        res.status(200).send(buss);
+        console.log("3")
+        return;
     }
 
     //get all categorys case
@@ -857,6 +867,7 @@ module.exports.post_location = (req, res) => {
         }
         else {
             //assure state == IN BOUNDS
+            console.log(bus.imei,this.outOfBoundsBuses)
             if(this.outOfBoundsBuses.has(bus.imei)){
                 this.outOfBoundsBuses.delete(bus.imei);
                 bus_c.active=true;
@@ -872,9 +883,11 @@ module.exports.post_location = (req, res) => {
         //update bus
         database.updateBusInfo(bus_c);
 
-        //save the bus object in hestory
-        bus_c.createdAt= new Date();
-        database.saveBusInHestory(bus_c);
+        //save the bus object in history
+        bus_c.category=database.lines().get(bus_c.line_index).category;
+        bus_c.isOutOfBounds=this.outOfBoundsBuses.has(bus_c.imei)
+        bus_c.isDisconnected=this.disconnected.has(bus_c.imei);
+        database.saveBusInHistory(bus_c);
 
     }, () => {
         res.status(401).send({

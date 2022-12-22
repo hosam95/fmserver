@@ -38,12 +38,14 @@ app.listen(config.get('app.port'), () => {
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
-  database.buses().forEach((val,key)=> {
+  database.buses().forEach(async (val,key)=> {
     if (val.time == null) {
     }
-    else if (val.time < time - 5) {
+    else if (!val.isDisconnected &&val.time < time - 5) {
       //send an alert.
       let bus=val;
+      bus.isDisconnected=true;
+      database.saveBusInHistory({...bus,time:new Date()/1000});
       bus.active=false;
       database.updateBusInfo(bus);
       cn.disconnected.add(val.imei);

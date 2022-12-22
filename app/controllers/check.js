@@ -342,13 +342,14 @@ module.exports.posted_location = (q) => {
 
 module.exports.in_line = (lat, long, map) => {
     let line_array=[];
-    for(let j=1;j<map.length;j++){
+    for(let j=0;j<map.length;j++){
         line_array.push([map[j].lat,map[j].long])
     }
 
     var pt = turf.point([lat, long]);
     var line = turf.lineString(line_array);
     var distance = (turf.pointToLineDistance(pt, line, {units: 'kilometers'}))*1000;
+    console.log(distance)
     if(distance>max_distance){
         return false;
     }
