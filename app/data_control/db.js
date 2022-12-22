@@ -183,8 +183,9 @@ class Database {
     var dbo = db.db(dbName);
     
     let id= await dbo.collection("categories").countDocuments({});
+    id=id.toString();
 
-    await dbo.collection("categories").insertOne({id:id.toString(),name:name}, function(err, res) {
+    dbo.collection("categories").insertOne({id:id,name:name}, function(err, res) {
       if (err) throw err;
     });
 
@@ -198,19 +199,20 @@ class Database {
    * 
    * @param {Category} category The category data
    */
-   updateCategoryInfo(category) {
-    MongoClient.connect(dbUri, function (err, db) {
+  async updateCategoryInfo(category) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+      
+    var categoryQuery = { id: category.id };
+    var newCategory = { $set: category };
+    console.log("id:")
+    await dbo.collection("categories").update(categoryQuery, newCategory, function (err, res) {
       if (err) throw err;
 
-      var dbo = db.db(dbName);
-      var categoryQuery = { id: category.id };
-      var newCategory = { $set: category };
-      dbo.collection("categories").updateOne(categoryQuery, newCategory, function (err, res) {
-        if (err) throw err;
-
-        db.close();
-      });
+      db.close();
     });
+   
     this.#categories.set(category.id,category);
   }
 
@@ -220,16 +222,15 @@ class Database {
    * 
    * @param {object} id The id of the category
    */
-   removeCategory(query) {
-    MongoClient.connect(dbUri, function (err, db) {
+  async removeCategory(query) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    var dbo = db.db(dbName);
+    await dbo.collection("categories").deleteOne(query, function (err, res) {
       if (err) throw err;
 
-      var dbo = db.db(dbName);
-      dbo.collection("categories").deleteOne(query, function (err, res) {
-        if (err) throw err;
-
-        db.close();
-      });
+      db.close();
     });
     this.#categories.delete(query.id);
   }
@@ -321,19 +322,23 @@ class Database {
    * 
    * @param {Bus} bus The bus data
    */
-  updateBusInfo(bus) {
-    MongoClient.connect(dbUri, function (err, db) {
+  async updateBusInfo(bus) {
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+
+    //delete bus._id if exists
+    if(bus._id)
+      delete bus._id;
+    
+    var dbo = db.db(dbName);
+    var busQuery = { imei: bus.imei };
+    var newBus = { $set: bus };
+    dbo.collection("buses").updateOne(busQuery, newBus, function (err, res) {
       if (err) throw err;
 
-      var dbo = db.db(dbName);
-      var busQuery = { imei: bus.imei };
-      var newBus = { $set: bus };
-      dbo.collection("buses").updateOne(busQuery, newBus, function (err, res) {
-        if (err) throw err;
-
-        db.close();
-      });
+      db.close();
     });
+
     this.#buses.set(bus.imei,{ ...this.#buses.get(bus.imei), ...bus});
   }
 
@@ -761,15 +766,40 @@ class Database {
     return p    
   }
 
-  async saveBusInHestory(bus){
+  async saveBusInHistory(bus){
     const db=await MongoClient.connect(dbUri)
     var dbo = db.db(dbName);
     
-    dbo .collection("BussHistory").insertOne(bus,function(err,res){
-      if(err) throw err;
+    await dbo .collection("BussHistory").insertOne(bus);
+    db.close;
+  }
 
-      db.close;
-    });
+  async getBussHistory(Time,category){
+    const db=await MongoClient.connect(dbUri)
+    var dbo = db.db(dbName);
+    
+    let query={time:{$lte:Time}}
+    if(category!="all"){
+      query.category=category;
+    }
+    let buss=await dbo.collection("BussHistory").aggregate([{
+      $match:query,
+    },{
+      $group:{
+        _id:"$imei",
+        time:{$max:"$time"},
+        data:{$push:"$$ROOT"}
+      }
+    },{
+      $unwind:"$data"
+    },{
+      $match:{$expr:{$eq: ["$time","$data.time"]}}
+    }
+    ]).toArray()
+    db.close;
+    let buss_c=[]
+    buss.map((bus)=>{buss_c.push(bus.data)})
+    return buss_c;
   }
 
   async addTicketsIfNew(tickets){
