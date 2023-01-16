@@ -1,4 +1,6 @@
 const express = require('express');
+const https=require('https');
+const fs=require('fs');
 const config = require('config');
 var cors = require('cors')
 const bodyParser = require('body-parser');
@@ -30,11 +32,21 @@ app.use(cors(corsOptions))
 // parse requests of content-type: application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 
-require("./app/routes/routes.js")(app);
 
-app.listen(config.get('app.port'), () => {
-  console.log(`Server is running on port ${config.get('app.port')}.`);
-});
+https
+  .createServer(
+    {
+      key: fs.readFileSync("key.pem"),
+      cert: fs.readFileSync("cert.pem"),
+    },
+    app
+  )
+  .listen(config.get('app.port'), ()=>{
+    console.log(`Server is running on port ${config.get('app.port')}.`)
+  }
+);
+
+require("./app/routes/routes.js")(app);
 
 setInterval(() => {
   time = Math.round(new Date().getTime() / 1000);
