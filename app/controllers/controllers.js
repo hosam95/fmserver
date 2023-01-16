@@ -652,12 +652,9 @@ module.exports.get_buses =async (req, res) => {
         category_id=q.category_id
     }
 
-    console.log("1")
     if(q.time){
         let buss=await database.getBussHistory(parseInt(q.time),category_id)
-        console.log("2")
         res.status(200).send(buss);
-        console.log("3")
         return;
     }
 
@@ -867,7 +864,6 @@ module.exports.post_location = (req, res) => {
         }
         else {
             //assure state == IN BOUNDS
-            console.log(bus.imei,this.outOfBoundsBuses)
             if(this.outOfBoundsBuses.has(bus.imei)){
                 this.outOfBoundsBuses.delete(bus.imei);
                 bus_c.active=true;
@@ -1022,7 +1018,6 @@ module.exports.add_or_update_bus = (req, res) => {
                 bus_c.active = q.active == 'true';
                 let line=check.get_line_by_name(database.lines(),q.line);
                 if(!line){
-                    console.log(q.line)
                     res.status(404).send({
                         message: "Line not found!"
                     });
