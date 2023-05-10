@@ -97,21 +97,9 @@ module.exports.delete_category=(req,res)=>{
 
 //get categories.
 module.exports.get_categories=(req,res)=>{
-    database.checkToken(req.header("token"), async(result) => {
-        if (result.role === 'admin') {
-            res.status(200).send(check.map2list(database.categories()));
+   
+    res.status(200).send(check.map2list(database.categories()));
 
-        }
-        else {
-            res.status(401).send({
-                message: "Access Denied"
-            });
-        }
-    }, () => {
-        res.status(401).send({
-            message: "Access Denied"
-        });
-    });
 }
 
 //stop sharing location.
