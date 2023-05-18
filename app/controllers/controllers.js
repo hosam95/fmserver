@@ -103,14 +103,12 @@ module.exports.get_categories=(req,res)=>{
 
         }
         else {
-            res.status(401).send({
-                message: "Access Denied"
-            });
+            var categories=check.map2list(database.categories());
+            res.status(200).send(categories.slice(1,categories.length));
         }
     }, () => {
-        res.status(401).send({
-            message: "Access Denied"
-        });
+        var categories=check.map2list(database.categories());
+            res.status(200).send(categories.slice(1,categories.length));
     });
 }
 
